@@ -13,6 +13,8 @@ export type ListingFormValues = {
   bedrooms?: number | null;
   bathrooms?: number | null;
   sqft?: number | null;
+  lat?: number | null;
+  lng?: number | null;
   dock_length_ft?: number | null;
   water_depth_ft?: number | null;
   max_boat_length_ft?: number | null;
@@ -41,6 +43,8 @@ const DEFAULTS: ListingFormValues = {
   bedrooms: null,
   bathrooms: null,
   sqft: null,
+  lat: null,
+  lng: null,
   dock_length_ft: null,
   water_depth_ft: null,
   max_boat_length_ft: null,
@@ -79,7 +83,7 @@ export function ListingForm({
       // sanitize nulls
       const clean: ListingFormValues = { ...v, status };
       (
-        ["bedrooms", "bathrooms", "sqft", "dock_length_ft", "water_depth_ft", "max_boat_length_ft"] as const
+        ["bedrooms", "bathrooms", "sqft", "lat", "lng", "dock_length_ft", "water_depth_ft", "max_boat_length_ft"] as const
       ).forEach((k) => {
         const val = clean[k];
         if (val === null || val === undefined || Number.isNaN(val as number)) {
@@ -165,6 +169,18 @@ export function ListingForm({
       <Field label="Address (not shown publicly)">
         <input value={v.address ?? ""} onChange={(e) => set("address", e.target.value)} className={input} />
       </Field>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Latitude (for map)">
+          <input type="number" step="any" min={-90} max={90} value={v.lat ?? ""} onChange={(e) => set("lat", e.target.value ? Number(e.target.value) : null)} className={input} placeholder="e.g. 27.9506" />
+        </Field>
+        <Field label="Longitude (for map)">
+          <input type="number" step="any" min={-180} max={180} value={v.lng ?? ""} onChange={(e) => set("lng", e.target.value ? Number(e.target.value) : null)} className={input} placeholder="e.g. -82.4572" />
+        </Field>
+      </div>
+      <p className="-mt-3 text-xs text-muted-foreground">
+        Tip: right-click your dock on Google Maps and copy the coordinates. Listings without lat/lng won't appear on the map view.
+      </p>
 
       {v.kind === "home" && (
         <div className="grid gap-4 sm:grid-cols-3">
