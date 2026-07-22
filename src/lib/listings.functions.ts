@@ -75,7 +75,15 @@ function applyFilters<T extends { eq: Function; gte: Function; lte: Function; or
   if (data.liveaboard_allowed) out = out.eq("liveaboard_allowed", true);
   if (data.tidal) out = out.eq("tidal", true);
   if (data.state) out = out.ilike("state", data.state);
-  if (data.query) out = out.or(`title.ilike.%${data.query}%,city.ilike.%${data.query}%,waterway.ilike.%${data.query}%,state.ilike.%${data.query}%`);
+  if (data.query) {
+    const safe = data.query.replace(/[,()*.%\\]/g, " ").trim().slice(0, 80);
+    if (safe) {
+      const like = `%${safe}%`;
+      out = out.or(
+        ["title", "city", "waterway", "state"].map((c) => `${c}.ilike.${like}`).join(","),
+      );
+    }
+  }
   return out;
 }
 
