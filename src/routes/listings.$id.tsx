@@ -148,7 +148,8 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-function DockSpecCard({ l }: { l: Awaited<ReturnType<typeof getPublicListing>>["listing"] }) {
+type ListingRow = NonNullable<Awaited<ReturnType<typeof getPublicListing>>>["listing"];
+function DockSpecCard({ l }: { l: ListingRow }) {
   const rows: Array<[string, string]> = [
     ["Type", l.kind === "home" ? "Waterfront home with dock" : "Boat slip"],
     ...(l.waterway ? [["Waterway", l.waterway]] as Array<[string, string]> : []),
