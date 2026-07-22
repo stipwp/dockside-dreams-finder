@@ -20,16 +20,16 @@ const featuredQO = queryOptions({
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DockFront — Waterfront Homes & Boat Slips FSBO" },
+      { title: "Boat And Dock" },
       {
         name: "description",
         content:
           "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S.",
       },
-      { property: "og:title", content: "DockFront — FSBO Waterfront & Dock Slips" },
+      { property: "og:title", content: "Boat And Dock" },
       {
         property: "og:description",
-        content: "Waterfront homes with private docks and boat slips, listed by owners.",
+        content: "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S.",
       },
       { property: "og:url", content: "https://boatanddock.lovable.app/" },
     ],

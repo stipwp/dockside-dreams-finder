@@ -79,15 +79,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DockFront — FSBO Waterfront Homes & Dock Slips" },
+      { title: "Boat And Dock" },
       {
         name: "description",
         content:
-          "Buy, sell, and rent waterfront homes with private docks and dock slips — for sale by owner. No agents, no commissions.",
+          "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S.",
       },
       { name: "author", content: "DockFront" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Boat And Dock" },
+      { name: "twitter:title", content: "Boat And Dock" },
+      { property: "og:description", content: "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S." },
+      { name: "twitter:description", content: "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a44acd30-15d6-4650-a3a6-89354dc69dc5" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a44acd30-15d6-4650-a3a6-89354dc69dc5" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
