@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as ListYourPropertyRouteImport } from './routes/list-your-property'
@@ -23,6 +24,11 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedListingsNewRouteImport } from './routes/_authenticated/listings.new'
 import { Route as AuthenticatedListingsIdEditRouteImport } from './routes/_authenticated/listings.$id.edit'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MapRoute = MapRouteImport.update({
   id: '/map',
   path: '/map',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/list-your-property': typeof ListYourPropertyRoute
   '/listings': typeof ListingsRouteWithChildren
   '/map': typeof MapRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/listings/$id': typeof ListingsIdRoute
   '/listings/new': typeof AuthenticatedListingsNewRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/list-your-property': typeof ListYourPropertyRoute
   '/listings': typeof ListingsRouteWithChildren
   '/map': typeof MapRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/listings/$id': typeof ListingsIdRoute
   '/listings/new': typeof AuthenticatedListingsNewRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/list-your-property': typeof ListYourPropertyRoute
   '/listings': typeof ListingsRouteWithChildren
   '/map': typeof MapRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/listings/$id': typeof ListingsIdRoute
   '/_authenticated/listings/new': typeof AuthenticatedListingsNewRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/list-your-property'
     | '/listings'
     | '/map'
+    | '/sitemap.xml'
     | '/dashboard'
     | '/listings/$id'
     | '/listings/new'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/list-your-property'
     | '/listings'
     | '/map'
+    | '/sitemap.xml'
     | '/dashboard'
     | '/listings/$id'
     | '/listings/new'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/list-your-property'
     | '/listings'
     | '/map'
+    | '/sitemap.xml'
     | '/_authenticated/dashboard'
     | '/listings/$id'
     | '/_authenticated/listings/new'
@@ -190,10 +202,18 @@ export interface RootRouteChildren {
   ListYourPropertyRoute: typeof ListYourPropertyRoute
   ListingsRoute: typeof ListingsRouteWithChildren
   MapRoute: typeof MapRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/map': {
       id: '/map'
       path: '/map'
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListYourPropertyRoute: ListYourPropertyRoute,
   ListingsRoute: ListingsRouteWithChildren,
   MapRoute: MapRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
