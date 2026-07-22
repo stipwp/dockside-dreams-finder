@@ -20,25 +20,58 @@ export const Route = createFileRoute("/listings/$id")({
     if (!res) throw notFound();
     return res;
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, params }) => {
     if (!loaderData) {
       return { meta: [{ title: "Listing not found — DockFront" }, { name: "robots", content: "noindex" }] };
     }
     const l = loaderData.listing;
     const title = `${l.title} — ${formatPrice(l.price_cents, l.price_period)} — DockFront`;
     const desc = (l.description ?? "").slice(0, 155) || `${l.title} in ${locationLine(l)}`;
+    const url = `https://boatanddock.lovable.app/listings/${params.id}`;
     const meta: Array<Record<string, string>> = [
       { title },
       { name: "description", content: desc },
       { property: "og:title", content: l.title },
       { property: "og:description", content: desc },
       { property: "og:type", content: "article" },
+      { property: "og:url", content: url },
     ];
     if (l.cover_photo_url) {
       meta.push({ property: "og:image", content: l.cover_photo_url });
       meta.push({ name: "twitter:image", content: l.cover_photo_url });
     }
-    return { meta };
+    const priceUnit =
+      l.price_period === "month" ? "MONTH" : l.price_period === "season" ? "ANN" : undefined;
+    const offer: Record<string, unknown> = {
+      "@type": "Offer",
+      price: (l.price_cents / 100).toFixed(2),
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+      url,
+    };
+    if (priceUnit) {
+      offer.priceSpecification = {
+        "@type": "UnitPriceSpecification",
+        price: (l.price_cents / 100).toFixed(2),
+        priceCurrency: "USD",
+        unitCode: priceUnit,
+      };
+    }
+    const jsonLd: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": l.kind === "home" ? "Product" : "Product",
+      name: l.title,
+      description: desc,
+      offers: offer,
+    };
+    if (l.cover_photo_url) jsonLd.image = l.cover_photo_url;
+    return {
+      meta,
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        { type: "application/ld+json", children: JSON.stringify(jsonLd) },
+      ],
+    };
   },
   notFoundComponent: () => (
     <div className="min-h-screen bg-background">

@@ -1,0 +1,15 @@
+# DockFront
+
+> FSBO marketplace for waterfront homes with private docks and boat slips — connecting boat owners with dock owners across the U.S., no agents or commissions.
+
+DockFront lets owners list waterfront homes with private docks and boat slips for sale or rent, and lets boat owners search, filter, and map listings by location, dock length, boat length, water depth, shore power, and other marine specs.
+
+## Pages
+
+- [Home](/): Featured listings, regional highlights, and search entry.
+- [Browse listings](/listings): Filterable grid of waterfront homes and dock slips.
+- [Map search](/map): Interactive map of available waterfront properties.
+- [How it works](/how-it-works): FSBO process for buyers, sellers, and renters.
+- [List your property](/list-your-property): Overview for owners considering listing.
+- [About](/about): About DockFront.
+- [Contact](/contact): Get in touch with the team.
