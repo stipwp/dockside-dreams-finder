@@ -20,7 +20,7 @@ const featuredQO = queryOptions({
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DockFront — Waterfront Homes with Docks & Boat Slips for Sale by Owner" },
+      { title: "DockFront — Waterfront Homes & Boat Slips FSBO" },
       {
         name: "description",
         content:
@@ -31,7 +31,9 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Waterfront homes with private docks and boat slips, listed by owners.",
       },
+      { property: "og:url", content: "https://boatanddock.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://boatanddock.lovable.app/" }],
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(featuredQO),
   component: HomePage,

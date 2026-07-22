@@ -99,6 +99,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "DockFront",
+          url: "https://boatanddock.lovable.app",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://boatanddock.lovable.app/listings?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "DockFront",
+          url: "https://boatanddock.lovable.app",
+          description:
+            "FSBO marketplace for waterfront homes with private docks and boat slips.",
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,

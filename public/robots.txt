@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /listings/new
+Disallow: /_authenticated/
+
+Sitemap: https://boatanddock.lovable.app/sitemap.xml

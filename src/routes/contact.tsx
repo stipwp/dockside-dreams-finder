@@ -6,11 +6,21 @@ import { Mail } from "lucide-react";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact DockFront" },
-      { name: "description", content: "Get in touch with the DockFront team." },
+      { title: "Contact DockFront — FSBO Waterfront Marketplace Support" },
+      {
+        name: "description",
+        content:
+          "Get in touch with the DockFront team for questions, feedback, partnership ideas, or help listing your waterfront home or dock slip.",
+      },
       { property: "og:title", content: "Contact — DockFront" },
-      { property: "og:description", content: "Get in touch with the DockFront team." },
+      {
+        property: "og:description",
+        content:
+          "Reach the DockFront team for support, feedback, or partnership ideas around FSBO waterfront homes and boat slips.",
+      },
+      { property: "og:url", content: "https://boatanddock.lovable.app/contact" },
     ],
+    links: [{ rel: "canonical", href: "https://boatanddock.lovable.app/contact" }],
   }),
   component: Contact,
 });
