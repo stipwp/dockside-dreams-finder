@@ -60,18 +60,43 @@ function HomePage() {
 
 function Hero() {
   const navigate = useNavigate();
+  const [advanced, setAdvanced] = useState(false);
   const [kind, setKind] = useState<"any" | "home" | "slip">("any");
   const [q, setQ] = useState("");
+  const [state, setState] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minDockLen, setMinDockLen] = useState("");
+  const [minBoatLen, setMinBoatLen] = useState("");
+  const [minDepth, setMinDepth] = useState("");
+  const [power, setPower] = useState("");
+  const [covered, setCovered] = useState(false);
+  const [floating, setFloating] = useState(false);
+  const [liveaboard, setLiveaboard] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  function buildSearch() {
+    const s: Record<string, unknown> = {};
+    if (kind !== "any") s.kind = kind;
+    if (q) s.q = q;
+    if (state) s.state = state;
+    if (minPrice) s.minPrice = Number(minPrice);
+    if (maxPrice) s.maxPrice = Number(maxPrice);
+    if (minDockLen) s.minDockLen = Number(minDockLen);
+    if (minBoatLen) s.minBoatLen = Number(minBoatLen);
+    if (minDepth) s.minDepth = Number(minDepth);
+    if (power) s.power = power;
+    if (covered) s.covered = true;
+    if (floating) s.floating = true;
+    if (liveaboard) s.liveaboard_allowed = true;
+    return s;
+  }
+
+  function goList(e: React.FormEvent) {
     e.preventDefault();
-    navigate({
-      to: "/listings",
-      search: {
-        kind: kind === "any" ? undefined : kind,
-        q: q || undefined,
-      } as never,
-    });
+    navigate({ to: "/listings", search: buildSearch() as never });
+  }
+  function goMap() {
+    navigate({ to: "/map", search: buildSearch() as never });
   }
 
   return (
@@ -83,60 +108,143 @@ function Hero() {
         height={1280}
         className="absolute inset-0 h-full w-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-nav/40 via-nav/30 to-nav/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-nav/50 via-nav/35 to-nav/80" />
 
-      <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-5xl flex-col items-center justify-center px-4 pt-24 text-center text-nav-foreground">
-        <p className="mb-6 text-xs font-medium uppercase tracking-[0.32em] text-teak">
-          For sale by owner
+      <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-6xl flex-col items-center justify-center px-4 pt-24 pb-16 text-center text-nav-foreground">
+        <p className="mb-5 text-xs font-medium uppercase tracking-[0.32em] text-teak">
+          For sale by owner · waterfront homes & dock slips
         </p>
-        <div className="hairline-frame px-6 py-6 md:px-12 md:py-10">
+        <div className="hairline-frame px-6 py-6 md:px-14 md:py-10">
           <h1 className="font-serif text-5xl leading-[0.95] md:text-7xl lg:text-8xl">
-            YOUR NEXT SLIP
+            LIVE ON
             <br />
-            AWAITS
+            THE WATER
           </h1>
         </div>
-        <p className="mt-6 max-w-xl text-sm text-nav-foreground/80 md:text-base">
-          Waterfront homes with private docks and boat slips — listed directly by
-          owners, for boat owners.
+        <p className="mt-6 max-w-xl text-sm text-nav-foreground/85 md:text-base">
+          Find your next waterfront home or dock slip. Listed direct by owners, for boat owners.
         </p>
 
-        <form
-          onSubmit={submit}
-          className="mt-10 flex w-full max-w-3xl flex-col gap-2 rounded-sm bg-background/95 p-3 text-foreground shadow-2xl backdrop-blur md:flex-row md:items-center"
-        >
-          <select
-            value={kind}
-            onChange={(e) => setKind(e.target.value as "any" | "home" | "slip")}
-            className="h-11 rounded-sm border border-input bg-transparent px-3 text-sm md:w-52"
-          >
-            <option value="any">All property types</option>
-            <option value="home">Waterfront homes</option>
-            <option value="slip">Dock slips for rent</option>
-          </select>
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="City, waterway, or keyword…"
-              className="h-11 w-full rounded-sm border border-input bg-transparent pl-9 pr-3 text-sm"
-            />
-          </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <button
-            type="submit"
-            className="h-11 rounded-sm bg-teak px-6 text-xs font-semibold uppercase tracking-[0.16em] text-teak-foreground transition-colors hover:bg-teak/90"
+            type="button"
+            onClick={goMap}
+            className="rounded-sm bg-teak px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-teak-foreground transition-colors hover:bg-teak/90"
           >
-            Search
+            Search on map
           </button>
+          <button
+            type="button"
+            onClick={() => setAdvanced((a) => !a)}
+            className="rounded-sm border border-nav-foreground/60 bg-transparent px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-nav-foreground transition-colors hover:bg-nav-foreground/10"
+          >
+            {advanced ? "Hide advanced" : "Advanced search"}
+          </button>
+        </div>
+
+        <form
+          onSubmit={goList}
+          className="mt-6 w-full max-w-5xl rounded-sm bg-background/95 p-4 text-left text-foreground shadow-2xl backdrop-blur"
+        >
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[10rem_1fr_10rem_auto]">
+            <select
+              value={kind}
+              onChange={(e) => setKind(e.target.value as "any" | "home" | "slip")}
+              className="h-11 rounded-sm border border-input bg-transparent px-3 text-sm"
+            >
+              <option value="any">All property types</option>
+              <option value="home">Waterfront homes</option>
+              <option value="slip">Dock slips</option>
+            </select>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="City, waterway, marina, keyword…"
+                className="h-11 w-full rounded-sm border border-input bg-transparent pl-9 pr-3 text-sm"
+              />
+            </div>
+            <input
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              placeholder="State"
+              className="h-11 rounded-sm border border-input bg-transparent px-3 text-sm"
+            />
+            <button
+              type="submit"
+              className="h-11 rounded-sm bg-nav px-6 text-xs font-semibold uppercase tracking-[0.16em] text-nav-foreground transition-colors hover:bg-nav/90"
+            >
+              Search
+            </button>
+          </div>
+
+          {advanced && (
+            <div className="mt-4 border-t border-border pt-4">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <FieldMini label="Min price">
+                  <input type="number" min={0} value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className={hInput} placeholder="0" />
+                </FieldMini>
+                <FieldMini label="Max price">
+                  <input type="number" min={0} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className={hInput} placeholder="any" />
+                </FieldMini>
+                <FieldMini label="Min dock (ft)">
+                  <input type="number" min={0} value={minDockLen} onChange={(e) => setMinDockLen(e.target.value)} className={hInput} />
+                </FieldMini>
+                <FieldMini label="Max boat (ft)">
+                  <input type="number" min={0} value={minBoatLen} onChange={(e) => setMinBoatLen(e.target.value)} className={hInput} />
+                </FieldMini>
+                <FieldMini label="Min depth (ft)">
+                  <input type="number" min={0} step={0.5} value={minDepth} onChange={(e) => setMinDepth(e.target.value)} className={hInput} />
+                </FieldMini>
+                <FieldMini label="Shore power">
+                  <select value={power} onChange={(e) => setPower(e.target.value)} className={hInput}>
+                    <option value="">Any</option>
+                    <option value="30A">30 amp</option>
+                    <option value="50A">50 amp</option>
+                    <option value="100A">100 amp</option>
+                  </select>
+                </FieldMini>
+                <FieldMini label=" ">
+                  <label className="flex h-11 items-center gap-2 rounded-sm border border-input px-3 text-xs">
+                    <input type="checkbox" checked={covered} onChange={(e) => setCovered(e.target.checked)} className="accent-teak" />
+                    Covered slip
+                  </label>
+                </FieldMini>
+                <FieldMini label=" ">
+                  <label className="flex h-11 items-center gap-2 rounded-sm border border-input px-3 text-xs">
+                    <input type="checkbox" checked={floating} onChange={(e) => setFloating(e.target.checked)} className="accent-teak" />
+                    Floating dock
+                  </label>
+                </FieldMini>
+                <FieldMini label=" ">
+                  <label className="flex h-11 items-center gap-2 rounded-sm border border-input px-3 text-xs">
+                    <input type="checkbox" checked={liveaboard} onChange={(e) => setLiveaboard(e.target.checked)} className="accent-teak" />
+                    Liveaboard OK
+                  </label>
+                </FieldMini>
+              </div>
+            </div>
+          )}
         </form>
 
         <div className="mt-6 flex items-center gap-6 text-xs uppercase tracking-widest text-nav-foreground/70">
-          <Link to="/map" className="hover:text-teak">Search on map →</Link>
           <Link to="/listings" className="hover:text-teak">Browse all listings →</Link>
+          <Link to="/list-your-property" className="hover:text-teak">List your property →</Link>
         </div>
       </div>
     </section>
+  );
+}
+
+const hInput = "h-11 w-full rounded-sm border border-input bg-transparent px-3 text-sm";
+
+function FieldMini({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+      {children}
+    </label>
   );
 }
 

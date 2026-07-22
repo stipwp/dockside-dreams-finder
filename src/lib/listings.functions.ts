@@ -20,15 +20,64 @@ function publicClient() {
   });
 }
 
+const numOpt = z
+  .union([z.number(), z.string()])
+  .transform((v) => (v === "" || v === null || v === undefined ? undefined : Number(v)))
+  .refine((v) => v === undefined || (!Number.isNaN(v) && v >= 0), "invalid")
+  .optional();
+
+const boolFlag = z
+  .union([z.boolean(), z.string()])
+  .transform((v) => (v === true || v === "true" || v === "1"))
+  .optional();
+
 const listFilters = z
   .object({
     kind: z.enum(["home", "slip"]).optional(),
-    minPrice: z.number().int().nonnegative().optional(),
-    maxPrice: z.number().int().nonnegative().optional(),
+    period: z.enum(["sale", "month", "season"]).optional(),
+    minPrice: numOpt,
+    maxPrice: numOpt,
+    minBeds: numOpt,
+    minBaths: numOpt,
+    minDockLen: numOpt,
+    minBoatLen: numOpt,
+    minDepth: numOpt,
+    power: z.string().trim().max(20).optional(),
+    covered: boolFlag,
+    floating: boolFlag,
+    water_hookup: boolFlag,
+    liveaboard_allowed: boolFlag,
+    tidal: boolFlag,
+    state: z.string().trim().max(60).optional(),
     query: z.string().trim().max(80).optional(),
-    limit: z.number().int().min(1).max(60).default(24),
+    limit: z.number().int().min(1).max(200).default(48),
   })
-  .default({ limit: 24 });
+  .default({ limit: 48 });
+
+function applyFilters<T extends { eq: Function; gte: Function; lte: Function; or: Function; is: Function }>(
+  q: T,
+  data: z.infer<typeof listFilters>,
+): T {
+  let out: any = q;
+  if (data.kind) out = out.eq("kind", data.kind);
+  if (data.period) out = out.eq("price_period", data.period);
+  if (data.minPrice !== undefined) out = out.gte("price_cents", data.minPrice);
+  if (data.maxPrice !== undefined) out = out.lte("price_cents", data.maxPrice);
+  if (data.minBeds !== undefined) out = out.gte("bedrooms", data.minBeds);
+  if (data.minBaths !== undefined) out = out.gte("bathrooms", data.minBaths);
+  if (data.minDockLen !== undefined) out = out.gte("dock_length_ft", data.minDockLen);
+  if (data.minBoatLen !== undefined) out = out.gte("max_boat_length_ft", data.minBoatLen);
+  if (data.minDepth !== undefined) out = out.gte("water_depth_ft", data.minDepth);
+  if (data.power) out = out.eq("power", data.power);
+  if (data.covered) out = out.eq("covered", true);
+  if (data.floating) out = out.eq("floating", true);
+  if (data.water_hookup) out = out.eq("water_hookup", true);
+  if (data.liveaboard_allowed) out = out.eq("liveaboard_allowed", true);
+  if (data.tidal) out = out.eq("tidal", true);
+  if (data.state) out = out.ilike("state", data.state);
+  if (data.query) out = out.or(`title.ilike.%${data.query}%,city.ilike.%${data.query}%,waterway.ilike.%${data.query}%,state.ilike.%${data.query}%`);
+  return out;
+}
 
 export const listPublicListings = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => listFilters.parse(d ?? {}))
@@ -37,16 +86,32 @@ export const listPublicListings = createServerFn({ method: "GET" })
     let q = supabase
       .from("listings")
       .select(
-        "id,kind,title,price_cents,price_period,city,state,waterway,cover_photo_url,bedrooms,bathrooms,dock_length_ft,max_boat_length_ft,featured,created_at",
+        "id,kind,title,price_cents,price_period,city,state,waterway,cover_photo_url,bedrooms,bathrooms,dock_length_ft,max_boat_length_ft,water_depth_ft,covered,floating,water_hookup,liveaboard_allowed,featured,lat,lng,created_at",
       )
       .eq("status", "published")
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(data.limit);
-    if (data.kind) q = q.eq("kind", data.kind);
-    if (data.minPrice !== undefined) q = q.gte("price_cents", data.minPrice);
-    if (data.maxPrice !== undefined) q = q.lte("price_cents", data.maxPrice);
-    if (data.query) q = q.or(`title.ilike.%${data.query}%,city.ilike.%${data.query}%,waterway.ilike.%${data.query}%`);
+    q = applyFilters(q as any, data);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const listMapListings = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => listFilters.parse(d ?? {}))
+  .handler(async ({ data }) => {
+    const supabase = publicClient();
+    let q = supabase
+      .from("listings")
+      .select(
+        "id,kind,title,price_cents,price_period,city,state,lat,lng,cover_photo_url,bedrooms,bathrooms,dock_length_ft,max_boat_length_ft",
+      )
+      .eq("status", "published")
+      .not("lat", "is", null)
+      .not("lng", "is", null)
+      .limit(500);
+    q = applyFilters(q as any, data);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return rows ?? [];
@@ -82,6 +147,8 @@ const listingInput = z.object({
   city: z.string().trim().max(80).nullable().optional(),
   state: z.string().trim().max(80).nullable().optional(),
   waterway: z.string().trim().max(120).nullable().optional(),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
   bedrooms: z.number().int().min(0).max(30).nullable().optional(),
   bathrooms: z.number().min(0).max(30).nullable().optional(),
   sqft: z.number().int().min(0).nullable().optional(),
