@@ -14,16 +14,291 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      favorites: {
+        Row: {
+          created_at: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiries: {
+        Row: {
+          created_at: string
+          from_email: string
+          from_name: string
+          from_phone: string | null
+          from_user_id: string | null
+          id: string
+          listing_id: string
+          message: string
+          read_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          from_email: string
+          from_name: string
+          from_phone?: string | null
+          from_user_id?: string | null
+          id?: string
+          listing_id: string
+          message: string
+          read_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          from_email?: string
+          from_name?: string
+          from_phone?: string | null
+          from_user_id?: string | null
+          id?: string
+          listing_id?: string
+          message?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_photos: {
+        Row: {
+          created_at: string
+          id: string
+          is_cover: boolean
+          listing_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          listing_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          listing_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_photos_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          address: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          country: string | null
+          cover_photo_url: string | null
+          covered: boolean | null
+          created_at: string
+          description: string | null
+          dock_beam_ft: number | null
+          dock_length_ft: number | null
+          featured: boolean
+          floating: boolean | null
+          id: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          lat: number | null
+          liveaboard_allowed: boolean | null
+          lng: number | null
+          lot_sqft: number | null
+          max_boat_length_ft: number | null
+          owner_id: string
+          power: string | null
+          price_cents: number
+          price_period: Database["public"]["Enums"]["price_period"] | null
+          sqft: number | null
+          state: string | null
+          status: Database["public"]["Enums"]["listing_status"]
+          tidal: boolean | null
+          title: string
+          updated_at: string
+          water_depth_ft: number | null
+          water_hookup: boolean | null
+          waterway: string | null
+        }
+        Insert: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          cover_photo_url?: string | null
+          covered?: boolean | null
+          created_at?: string
+          description?: string | null
+          dock_beam_ft?: number | null
+          dock_length_ft?: number | null
+          featured?: boolean
+          floating?: boolean | null
+          id?: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          lat?: number | null
+          liveaboard_allowed?: boolean | null
+          lng?: number | null
+          lot_sqft?: number | null
+          max_boat_length_ft?: number | null
+          owner_id: string
+          power?: string | null
+          price_cents?: number
+          price_period?: Database["public"]["Enums"]["price_period"] | null
+          sqft?: number | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          tidal?: boolean | null
+          title: string
+          updated_at?: string
+          water_depth_ft?: number | null
+          water_hookup?: boolean | null
+          waterway?: string | null
+        }
+        Update: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          cover_photo_url?: string | null
+          covered?: boolean | null
+          created_at?: string
+          description?: string | null
+          dock_beam_ft?: number | null
+          dock_length_ft?: number | null
+          featured?: boolean
+          floating?: boolean | null
+          id?: string
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          lat?: number | null
+          liveaboard_allowed?: boolean | null
+          lng?: number | null
+          lot_sqft?: number | null
+          max_boat_length_ft?: number | null
+          owner_id?: string
+          power?: string | null
+          price_cents?: number
+          price_period?: Database["public"]["Enums"]["price_period"] | null
+          sqft?: number | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          tidal?: boolean | null
+          title?: string
+          updated_at?: string
+          water_depth_ft?: number | null
+          water_hookup?: boolean | null
+          waterway?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "owner" | "admin"
+      listing_kind: "home" | "slip"
+      listing_status: "draft" | "published" | "sold_rented"
+      price_period: "sale" | "month" | "season"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +425,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["owner", "admin"],
+      listing_kind: ["home", "slip"],
+      listing_status: ["draft", "published", "sold_rented"],
+      price_period: ["sale", "month", "season"],
+    },
   },
 } as const
