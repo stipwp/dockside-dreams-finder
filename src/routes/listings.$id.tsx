@@ -201,6 +201,8 @@ function Gallery({ photos, title }: { photos: Array<{ id: string; url: string }>
               <button
                 key={p.id}
                 onClick={() => setActive(i)}
+                aria-label={`View photo ${i + 1} of ${photos.length}`}
+                aria-pressed={i === active}
                 className={
                   "h-20 w-28 flex-shrink-0 overflow-hidden ring-2 transition-all " +
                   (i === active ? "ring-teak" : "ring-transparent opacity-70 hover:opacity-100")
