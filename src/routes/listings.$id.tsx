@@ -251,7 +251,7 @@ function Gallery({ photos, title }: { photos: Array<{ id: string; url: string }>
   );
 }
 
-function ContactForm({ listingId, contactEmail }: { listingId: string; contactEmail: string | null }) {
+function ContactForm({ listingId }: { listingId: string }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
