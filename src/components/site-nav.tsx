@@ -5,11 +5,11 @@ import { Anchor, Menu, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const NAV = [
-  { to: "/listings", label: "Browse" },
+  { to: "/listings", label: "Buy" },
+  { to: "/rent", label: "Rent a dock" },
   { to: "/map", label: "Map" },
   { to: "/how-it-works", label: "How it works" },
   { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
 ] as const;
 
 export function SiteNav({ transparent = false }: { transparent?: boolean }) {

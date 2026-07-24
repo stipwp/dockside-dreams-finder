@@ -47,6 +47,10 @@ function Dashboard() {
               Owner dashboard
             </p>
             <h1 className="mt-2 font-serif text-4xl md:text-5xl">Your listings</h1>
+            <div className="mt-3 flex gap-4 text-xs uppercase tracking-widest">
+              <Link to="/bookings" className="text-muted-foreground hover:text-teak">Booking requests →</Link>
+              <Link to="/trips" className="text-muted-foreground hover:text-teak">Your trips →</Link>
+            </div>
           </div>
           <button
             onClick={() => navigate({ to: "/listings/new" })}
