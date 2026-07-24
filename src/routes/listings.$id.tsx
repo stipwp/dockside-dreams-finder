@@ -326,11 +326,6 @@ function ContactForm({ listingId }: { listingId: string }) {
       >
         {busy ? "Sending…" : "Send message"}
       </button>
-      {contactEmail && (
-        <p className="pt-2 text-center text-xs text-muted-foreground">
-          Or email directly: <a className="text-teak" href={`mailto:${contactEmail}`}>{contactEmail}</a>
-        </p>
-      )}
     </form>
   );
 }
