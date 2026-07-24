@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_messages: {
+        Row: {
+          body: string
+          booking_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          booking_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          booking_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          boat_beam_ft: number | null
+          boat_draft_ft: number | null
+          boat_length_ft: number | null
+          boat_name: string | null
+          cleaning_fee_cents: number
+          created_at: string
+          end_date: string
+          guest_id: string
+          guests: number
+          host_id: string
+          host_note: string | null
+          id: string
+          listing_id: string
+          message: string | null
+          nights: number
+          payment_intent_id: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["booking_status"]
+          subtotal_cents: number
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          boat_beam_ft?: number | null
+          boat_draft_ft?: number | null
+          boat_length_ft?: number | null
+          boat_name?: string | null
+          cleaning_fee_cents?: number
+          created_at?: string
+          end_date: string
+          guest_id: string
+          guests?: number
+          host_id: string
+          host_note?: string | null
+          id?: string
+          listing_id: string
+          message?: string | null
+          nights: number
+          payment_intent_id?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          subtotal_cents?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          boat_beam_ft?: number | null
+          boat_draft_ft?: number | null
+          boat_length_ft?: number | null
+          boat_name?: string | null
+          cleaning_fee_cents?: number
+          created_at?: string
+          end_date?: string
+          guest_id?: string
+          guests?: number
+          host_id?: string
+          host_note?: string | null
+          id?: string
+          listing_id?: string
+          message?: string | null
+          nights?: number
+          payment_intent_id?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          subtotal_cents?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string
@@ -84,6 +196,44 @@ export type Database = {
           },
         ]
       }
+      listing_availability: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          is_blocked: boolean
+          listing_id: string
+          price_cents_override: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          is_blocked?: boolean
+          listing_id: string
+          price_cents_override?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          is_blocked?: boolean
+          listing_id?: string
+          price_cents_override?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_availability_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_photos: {
         Row: {
           created_at: string
@@ -122,9 +272,11 @@ export type Database = {
       listings: {
         Row: {
           address: string | null
+          advance_notice_hours: number
           bathrooms: number | null
           bedrooms: number | null
           city: string | null
+          cleaning_fee_cents: number
           contact_email: string | null
           contact_phone: string | null
           country: string | null
@@ -137,12 +289,20 @@ export type Database = {
           featured: boolean
           floating: boolean | null
           id: string
+          instant_book: boolean
           kind: Database["public"]["Enums"]["listing_kind"]
           lat: number | null
+          listing_type: Database["public"]["Enums"]["listing_type"] | null
           liveaboard_allowed: boolean | null
           lng: number | null
           lot_sqft: number | null
+          max_boat_beam_ft: number | null
+          max_boat_draft_ft: number | null
           max_boat_length_ft: number | null
+          max_guests: number
+          max_nights: number | null
+          min_nights: number
+          nightly_price_cents: number | null
           owner_id: string
           power: string | null
           price_cents: number
@@ -156,12 +316,15 @@ export type Database = {
           water_depth_ft: number | null
           water_hookup: boolean | null
           waterway: string | null
+          weekly_price_cents: number | null
         }
         Insert: {
           address?: string | null
+          advance_notice_hours?: number
           bathrooms?: number | null
           bedrooms?: number | null
           city?: string | null
+          cleaning_fee_cents?: number
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -174,12 +337,20 @@ export type Database = {
           featured?: boolean
           floating?: boolean | null
           id?: string
+          instant_book?: boolean
           kind: Database["public"]["Enums"]["listing_kind"]
           lat?: number | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
           liveaboard_allowed?: boolean | null
           lng?: number | null
           lot_sqft?: number | null
+          max_boat_beam_ft?: number | null
+          max_boat_draft_ft?: number | null
           max_boat_length_ft?: number | null
+          max_guests?: number
+          max_nights?: number | null
+          min_nights?: number
+          nightly_price_cents?: number | null
           owner_id: string
           power?: string | null
           price_cents?: number
@@ -193,12 +364,15 @@ export type Database = {
           water_depth_ft?: number | null
           water_hookup?: boolean | null
           waterway?: string | null
+          weekly_price_cents?: number | null
         }
         Update: {
           address?: string | null
+          advance_notice_hours?: number
           bathrooms?: number | null
           bedrooms?: number | null
           city?: string | null
+          cleaning_fee_cents?: number
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -211,12 +385,20 @@ export type Database = {
           featured?: boolean
           floating?: boolean | null
           id?: string
+          instant_book?: boolean
           kind?: Database["public"]["Enums"]["listing_kind"]
           lat?: number | null
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
           liveaboard_allowed?: boolean | null
           lng?: number | null
           lot_sqft?: number | null
+          max_boat_beam_ft?: number | null
+          max_boat_draft_ft?: number | null
           max_boat_length_ft?: number | null
+          max_guests?: number
+          max_nights?: number | null
+          min_nights?: number
+          nightly_price_cents?: number | null
           owner_id?: string
           power?: string | null
           price_cents?: number
@@ -230,6 +412,7 @@ export type Database = {
           water_depth_ft?: number | null
           water_hookup?: boolean | null
           waterway?: string | null
+          weekly_price_cents?: number | null
         }
         Relationships: []
       }
@@ -296,8 +479,15 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin"
+      booking_status:
+        | "pending"
+        | "accepted"
+        | "declined"
+        | "cancelled"
+        | "expired"
       listing_kind: "home" | "slip"
       listing_status: "draft" | "published" | "sold_rented"
+      listing_type: "home_sale" | "slip_lease" | "slip_short_term"
       price_period: "sale" | "month" | "season"
     }
     CompositeTypes: {
@@ -427,8 +617,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin"],
+      booking_status: [
+        "pending",
+        "accepted",
+        "declined",
+        "cancelled",
+        "expired",
+      ],
       listing_kind: ["home", "slip"],
       listing_status: ["draft", "published", "sold_rented"],
+      listing_type: ["home_sale", "slip_lease", "slip_short_term"],
       price_period: ["sale", "month", "season"],
     },
   },

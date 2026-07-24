@@ -99,7 +99,7 @@ function EditListing() {
     );
 
   const initial: ListingFormValues = {
-    kind: data.kind,
+    listing_type: (data.listing_type as ListingFormValues["listing_type"]) ?? (data.kind === "home" ? "home_sale" : "slip_lease"),
     title: data.title,
     description: data.description ?? "",
     price_cents: data.price_cents,
@@ -111,9 +111,13 @@ function EditListing() {
     bedrooms: data.bedrooms,
     bathrooms: data.bathrooms,
     sqft: data.sqft,
+    lat: data.lat,
+    lng: data.lng,
     dock_length_ft: data.dock_length_ft,
     water_depth_ft: data.water_depth_ft,
     max_boat_length_ft: data.max_boat_length_ft,
+    max_boat_beam_ft: data.max_boat_beam_ft,
+    max_boat_draft_ft: data.max_boat_draft_ft,
     power: data.power ?? "",
     water_hookup: data.water_hookup ?? false,
     covered: data.covered ?? false,
@@ -123,6 +127,13 @@ function EditListing() {
     contact_email: data.contact_email ?? "",
     contact_phone: data.contact_phone ?? "",
     cover_photo_url: data.cover_photo_url ?? "",
+    nightly_price_cents: data.nightly_price_cents,
+    weekly_price_cents: data.weekly_price_cents,
+    cleaning_fee_cents: data.cleaning_fee_cents ?? 0,
+    min_nights: data.min_nights ?? 1,
+    max_nights: data.max_nights,
+    instant_book: data.instant_book ?? false,
+    max_guests: data.max_guests ?? 4,
     status: data.status === "published" ? "published" : "draft",
   };
 
