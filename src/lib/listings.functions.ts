@@ -209,7 +209,8 @@ export const updateListing = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => listingInput.extend({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...rest } = data;
-    const { error } = await context.supabase.from("listings").update(rest).eq("id", id);
+    const kind = deriveKind(rest.listing_type);
+    const { error } = await context.supabase.from("listings").update({ ...rest, kind }).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
