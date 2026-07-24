@@ -132,7 +132,7 @@ export const getPublicListing = createServerFn({ method: "GET" })
     const { data: listing, error } = await supabase
       .from("listings")
       .select(
-        "id,owner_id,kind,status,title,description,price_cents,price_period,city,state,country,waterway,lat,lng,cover_photo_url,bedrooms,bathrooms,sqft,lot_sqft,dock_length_ft,dock_beam_ft,water_depth_ft,max_boat_length_ft,power,water_hookup,covered,floating,tidal,liveaboard_allowed,featured,created_at,updated_at",
+        "id,owner_id,kind,listing_type,status,title,description,price_cents,price_period,city,state,country,waterway,lat,lng,cover_photo_url,bedrooms,bathrooms,sqft,lot_sqft,dock_length_ft,dock_beam_ft,water_depth_ft,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,power,water_hookup,covered,floating,tidal,liveaboard_allowed,nightly_price_cents,weekly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_guests,advance_notice_hours,featured,created_at,updated_at",
       )
       .eq("id", data.id)
       .eq("status", "published")
@@ -148,7 +148,7 @@ export const getPublicListing = createServerFn({ method: "GET" })
   });
 
 const listingInput = z.object({
-  kind: z.enum(["home", "slip"]),
+  listing_type: z.enum(["home_sale", "slip_lease", "slip_short_term"]),
   title: z.string().trim().min(3).max(140),
   description: z.string().trim().max(4000).optional().nullable(),
   price_cents: z.number().int().nonnegative(),
@@ -165,6 +165,8 @@ const listingInput = z.object({
   dock_length_ft: z.number().min(0).nullable().optional(),
   water_depth_ft: z.number().min(0).nullable().optional(),
   max_boat_length_ft: z.number().min(0).nullable().optional(),
+  max_boat_beam_ft: z.number().min(0).nullable().optional(),
+  max_boat_draft_ft: z.number().min(0).nullable().optional(),
   power: z.string().trim().max(60).nullable().optional(),
   water_hookup: z.boolean().optional(),
   covered: z.boolean().optional(),
@@ -174,16 +176,28 @@ const listingInput = z.object({
   contact_email: z.string().email().max(160).nullable().optional(),
   contact_phone: z.string().trim().max(40).nullable().optional(),
   cover_photo_url: z.string().url().nullable().optional(),
+  nightly_price_cents: z.number().int().nonnegative().nullable().optional(),
+  weekly_price_cents: z.number().int().nonnegative().nullable().optional(),
+  cleaning_fee_cents: z.number().int().nonnegative().optional(),
+  min_nights: z.number().int().min(1).max(365).optional(),
+  max_nights: z.number().int().min(1).max(365).nullable().optional(),
+  instant_book: z.boolean().optional(),
+  max_guests: z.number().int().min(1).max(50).optional(),
   status: z.enum(["draft", "published"]).default("draft"),
 });
+
+function deriveKind(t: "home_sale" | "slip_lease" | "slip_short_term"): "home" | "slip" {
+  return t === "home_sale" ? "home" : "slip";
+}
 
 export const createListing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => listingInput.parse(d))
   .handler(async ({ data, context }) => {
+    const kind = deriveKind(data.listing_type);
     const { data: row, error } = await context.supabase
       .from("listings")
-      .insert({ ...data, owner_id: context.userId })
+      .insert({ ...data, kind, owner_id: context.userId })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
