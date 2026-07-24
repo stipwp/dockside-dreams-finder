@@ -131,7 +131,9 @@ export const getPublicListing = createServerFn({ method: "GET" })
     const supabase = publicClient();
     const { data: listing, error } = await supabase
       .from("listings")
-      .select("*")
+      .select(
+        "id,owner_id,kind,status,title,description,price_cents,price_period,city,state,country,waterway,lat,lng,cover_photo_url,bedrooms,bathrooms,sqft,lot_sqft,dock_length_ft,dock_beam_ft,water_depth_ft,max_boat_length_ft,power,water_hookup,covered,floating,tidal,liveaboard_allowed,featured,created_at,updated_at",
+      )
       .eq("id", data.id)
       .eq("status", "published")
       .maybeSingle();
