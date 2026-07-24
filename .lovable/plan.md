@@ -1,115 +1,97 @@
 
-## DockFront — FSBO Waterfront Homes & Dock Slips
+# DockFront → Airbnb + Zillow hybrid
 
-A For-Sale-By-Owner marketplace for boat owners. Two listing types:
-1. **Waterfront homes with private docks** (for sale)
-2. **Dock slips for rent/lease** (private owners renting slips)
+Turn the site into a two-mode marketplace:
 
-Visual + structural inspiration: internationalsurfproperties.com — dark navigation bar, full-bleed hero photo, centered wordmark, prominent search block overlaid on hero, "Featured Listings" carousel, tiled destination/region grid, footer with contact + list-your-property CTA. We reinterpret the aesthetic for a nautical/marine feel (deep navy + weathered teak/rope accents, crisp white, a dockside hero photo instead of a surfer).
+- **Zillow mode** — waterfront homes for sale (FSBO) and long-term dock leases (existing).
+- **Airbnb mode** — short-term nightly/weekly dock rentals with a real availability calendar, date search, booking requests, and host accept/decline.
 
----
+Payments stay off for now (contact/booking only). Stripe Connect can be added in a later pass.
 
-### Pages & routes
+## 1. Data model additions
 
-```
-/                       Home (hero + search + featured + regions + how it works)
-/listings               Browse (filters: type, price, beds, dock length, water depth, region)
-/listings/$id           Listing detail (gallery, specs, dock specs, map, contact owner)
-/map                    Map search view
-/list-your-property     Marketing page + CTA to auth/dashboard
-/how-it-works           FSBO explainer
-/about                  About
-/contact                Contact
-/auth                   Sign in / sign up (email+password + Google)
-/_authenticated/dashboard      Owner dashboard (my listings)
-/_authenticated/listings/new   Create listing wizard
-/_authenticated/listings/$id/edit
-/_authenticated/messages       Inquiries inbox
-/_authenticated/favorites      Saved listings
-```
+New `listing_type` dimension on `listings`:
+- `home_sale` — waterfront home for sale
+- `slip_lease` — long-term dock lease (existing "slip")
+- `slip_short_term` — nightly/weekly dock rental (new)
 
-Every route gets its own `head()` with unique title/description/OG tags.
+Add columns to `listings` for short-term:
+- `nightly_price_cents`, `weekly_price_cents`, `cleaning_fee_cents`
+- `min_nights`, `max_nights`, `advance_notice_hours`, `instant_book` (bool)
+- Boat-fit specs already exist (length, beam, depth, power) — reuse.
 
----
-
-### Design direction
-
-- **Palette**: deep navy `#0B1F33`, weathered teak `#B08256`, foam white `#F7F5EF`, buoy red accent `#D9482B`, muted seafoam `#7FA9A4`. Defined as oklch tokens in `src/styles.css`.
-- **Typography**: display serif for headlines (Cormorant / Instrument Serif vibe), clean sans (Work Sans / Inter) for UI/body. Loaded via `<link>` in `__root.tsx`.
-- **Layout DNA from reference**: dark top nav with right-side "LIST YOUR PROPERTY" pill button; full-bleed hero image; centered oversized headline in a thin outlined box; overlaid search card with dropdown filters + price range slider; alternating full-width bands below; featured-listing carousel with badge chips ("FEATURED", "FOR SALE", "FOR RENT", "NEW"); regions/waterways grid; footer with big brand mark.
-- Nautical imagery generated for hero, region tiles, and featured placeholders.
-
----
-
-### Data model (Lovable Cloud / Supabase)
-
-```
-profiles(id → auth.users, full_name, phone, avatar_url, created_at)
-user_roles(user_id, role: 'owner'|'admin')      -- separate table, has_role() SECURITY DEFINER
-listings(
-  id, owner_id → auth.users, kind: 'home'|'slip',
-  title, description, status: 'draft'|'published'|'sold_rented',
-  price_cents, price_period: 'sale'|'month'|'season',   -- period null for homes
-  address, city, state, country, lat, lng, waterway,
-  bedrooms, bathrooms, sqft, lot_sqft,                  -- home fields
-  dock_length_ft, dock_beam_ft, water_depth_ft,
-  max_boat_length_ft, power, water_hookup, liveaboard_allowed,
-  covered, floating, tidal,
-  featured, created_at, updated_at
-)
-listing_photos(id, listing_id, url, sort_order, is_cover)
-favorites(user_id, listing_id, created_at)
-inquiries(id, listing_id, from_user_id, message, contact_email, contact_phone, created_at, read_at)
-```
+New tables:
+- **`listing_availability`** — per-day blocks/unblocks and price overrides (`listing_id`, `date`, `is_blocked`, `price_cents_override`). Owner-managed.
+- **`bookings`** — guest reservations: `listing_id`, `guest_id`, `start_date`, `end_date`, `guests`, `boat_length_ft`, `boat_beam_ft`, `boat_draft_ft`, `boat_name`, `total_cents`, `status` (`pending` | `accepted` | `declined` | `cancelled` | `expired`), `message`.
+- **`booking_messages`** — thread per booking between guest and host.
 
 RLS:
-- `listings`: public SELECT where `status='published'`; owner SELECT/INSERT/UPDATE/DELETE on own rows.
-- `listing_photos`: public SELECT for photos of published listings; owner CRUD on own.
-- `favorites`, `inquiries`: user scoped by `auth.uid()`.
-- Storage bucket `listing-photos` (public read, authenticated write scoped by owner path).
+- `listing_availability`: public SELECT for published listings; owner full write.
+- `bookings`: guest sees own; host sees bookings on own listings; both can update status per role (host accept/decline, guest cancel).
+- `booking_messages`: participants only.
 
-Grants + `GRANT`s to `anon`/`authenticated` per public-schema rules.
+All new public tables get GRANTs; owner-write paths use `requireSupabaseAuth`.
 
----
+## 2. Server functions
 
-### Auth
+- `searchShortTermSlips({ where, start, end, boat_length, boat_beam, boat_draft, guests })` — filters by lat/lng bbox + boat-fit + availability (no blocked days, no overlapping accepted bookings in range).
+- `getListingAvailability(listing_id, month)` — calendar data for guest date-picker.
+- `createBookingRequest(...)` — guest submits; server validates dates free, boat fits, price = sum(nightly per day) + cleaning. Auto-accept when `instant_book`.
+- `respondToBooking(booking_id, accept|decline, note)` — host only.
+- `cancelBooking(booking_id)` — guest or host.
+- `listMyBookings()` / `listMyHostBookings()` — dashboards.
+- `setAvailability(listing_id, dates[], is_blocked, price_override?)` — host calendar edits.
+- `sendBookingMessage(booking_id, body)` / `listBookingMessages(booking_id)`.
 
-- Lovable Cloud email/password + Google sign-in (via `lovable.auth.signInWithOAuth`).
-- `profiles` auto-created via trigger on signup.
-- Protected owner routes under `src/routes/_authenticated/`.
+## 3. Routes & UI
 
----
+**Home page** — split hero into two entry modes (Zillow-style search on left, Airbnb-style on right):
+- "Buy a waterfront home / lease a slip" → `/listings` (existing).
+- "Find a dock for your boat" → `/rent` with where + dates + boat dimensions + guests.
 
-### Server functions (`src/lib/*.functions.ts`)
+**New public routes**
+- `/rent` — Airbnb-style search: location, check-in/out date range, boat length/beam/draft, guest count. Grid + map results. Uses `searchShortTermSlips`.
+- `/rent/$id` — short-term slip detail: photo gallery, boat-fit specs, availability calendar (react-day-picker), price breakdown, "Request to book" / "Book instantly" panel, host card.
 
-- `listPublicListings` (filters, pagination) — public, server publishable client
-- `getPublicListing(id)` — public
-- `listMyListings`, `createListing`, `updateListing`, `deleteListing`, `publishListing` — `requireSupabaseAuth`
-- `uploadListingPhoto` (signed URL flow) — auth
-- `toggleFavorite`, `listFavorites` — auth
-- `sendInquiry` — public (rate-limited); `listInquiries` — auth (owner)
+**Existing routes**
+- `/listings` and `/listings/$id` — extended with `listing_type=home_sale|slip_lease` filter and updated card badges. Long-term leases route here.
 
----
+**Owner (`_authenticated`)**
+- `/dashboard` — tabs: My Listings, My Bookings (as host), My Trips (as guest).
+- `/listings/new` and `/listings/$id/edit` — add "Listing type" picker; when `slip_short_term`, reveal nightly/weekly/cleaning/min-max nights/instant-book fields.
+- `/listings/$id/calendar` — month calendar to block dates and set price overrides.
+- `/bookings/$id` — booking detail + message thread + accept/decline/cancel actions.
 
-### Build order
+## 4. Components
 
-1. Enable Lovable Cloud; add design tokens + fonts; build root layout + dark marine nav + footer.
-2. Home page: hero, search bar, featured carousel, regions grid, how-it-works strip, CTA band.
-3. Migrations: profiles, user_roles + has_role, listings, listing_photos, favorites, inquiries, storage bucket, RLS + grants, signup trigger.
-4. Public browse: `/listings` grid with filters + `/listings/$id` detail page with gallery, spec table, dock specs card, contact-owner form.
-5. `/map` view (Leaflet via ClientOnly + React.lazy).
-6. Auth pages + Google sign-in + `_authenticated` gate.
-7. Owner dashboard + create/edit listing wizard with photo upload.
-8. Favorites + inquiries inbox.
-9. Static pages: how-it-works, about, contact, list-your-property.
-10. SEO polish: per-route `head()`, sitemap-friendly slugs, JSON-LD for listings, OG images from cover photo.
+- `RentSearchBar` — where + date range + boat dims + guests, drives `/rent` search params.
+- `AvailabilityCalendar` (guest, read-only + selectable range) and `HostAvailabilityCalendar` (multi-select block/unblock).
+- `BookingRequestPanel` — price breakdown, boat-fit warnings, submit.
+- `BookingCard` + `BookingStatusBadge` — dashboards.
+- `MessageThread` — booking messages.
+- Reuse `ClientMap` for `/rent` results.
 
----
+## 5. Search params (all URL-driven)
 
-### Notes / assumptions
+`/rent` schema (via `fallback()` from `@tanstack/zod-adapter`):
+`where`, `start`, `end` (ISO), `boat_length`, `boat_beam`, `boat_draft`, `guests`, `instant`, `view` (grid|map).
 
-- Payments not included (FSBO — owners transact directly). Can add featured-listing upsell later via Stripe.
-- Map uses OpenStreetMap tiles (no key). Mapbox can be swapped in later if desired.
-- Messaging is inquiry-form → owner email + in-app inbox. Full realtime chat can come later.
+## 6. Nav & polish
 
-Approve to build, or tell me what to adjust (scope cuts, extra listing types, different palette, payments for featured listings, etc.).
+- SiteNav: add "Rent a dock" and "Buy / Lease" primary links; keep "List your property".
+- List-your-property page updated with three cards: sell home, lease slip long-term, host slip short-term.
+- SEO head() on every new route with unique title/description/OG.
+
+## 7. Out of scope for this pass
+
+Stripe Connect payouts, guest checkout, reviews/ratings, host onboarding KYC. Structure booking table so payments can bolt on later (`status='accepted' → 'paid'` transition + `payment_intent_id` column reserved).
+
+## Technical notes (for the implementer)
+
+- Migrations run in one batch per Lovable Cloud rules (CREATE TABLE → GRANT → ENABLE RLS → CREATE POLICY).
+- Overlap check in `createBookingRequest` uses `tstzrange` overlap against accepted bookings; also block `listing_availability.is_blocked=true` days.
+- `nightly_price_cents` lives on `listings`; per-day overrides live on `listing_availability`. Total = Σ(override ?? nightly) + cleaning_fee.
+- Public `searchShortTermSlips` runs on the server publishable client (anon-safe columns only, no owner contact fields).
+- Bookings + messages fetchers use `requireSupabaseAuth`; called from `_authenticated` loaders or components via `useServerFn`.
+- Availability calendar UI: use existing shadcn `Calendar` (react-day-picker) with `mode="range"` on guest side and `mode="multiple"` on host side; add `pointer-events-auto`.
+- Keep existing PostgREST-injection-safe query sanitizer on any `.or()` search inputs added to `/rent`.
