@@ -163,7 +163,7 @@ function Body({ id }: { id: string }) {
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <ContactForm listingId={l.id} contactEmail={l.contact_email} />
+          <ContactForm listingId={l.id} />
         </aside>
       </div>
     </div>
@@ -251,7 +251,7 @@ function Gallery({ photos, title }: { photos: Array<{ id: string; url: string }>
   );
 }
 
-function ContactForm({ listingId, contactEmail }: { listingId: string; contactEmail: string | null }) {
+function ContactForm({ listingId }: { listingId: string }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -326,11 +326,6 @@ function ContactForm({ listingId, contactEmail }: { listingId: string; contactEm
       >
         {busy ? "Sending…" : "Send message"}
       </button>
-      {contactEmail && (
-        <p className="pt-2 text-center text-xs text-muted-foreground">
-          Or email directly: <a className="text-teak" href={`mailto:${contactEmail}`}>{contactEmail}</a>
-        </p>
-      )}
     </form>
   );
 }

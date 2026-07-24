@@ -1,0 +1,1 @@
+REVOKE SELECT (contact_email, contact_phone, address) ON public.listings FROM anon;
