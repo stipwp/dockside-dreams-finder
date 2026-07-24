@@ -163,7 +163,7 @@ function Body({ id }: { id: string }) {
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <ContactForm listingId={l.id} contactEmail={l.contact_email} />
+          <ContactForm listingId={l.id} />
         </aside>
       </div>
     </div>
