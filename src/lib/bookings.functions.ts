@@ -39,6 +39,7 @@ function nightsBetween(start: string, end: string): number {
 
 const rentSearch = z.object({
   where: z.string().trim().max(80).optional(),
+  waterway: z.string().trim().max(80).optional(),
   start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   boat_length: z.coerce.number().nonnegative().optional(),
@@ -46,7 +47,7 @@ const rentSearch = z.object({
   boat_draft: z.coerce.number().nonnegative().optional(),
   guests: z.coerce.number().int().min(1).optional(),
   instant: z.union([z.boolean(), z.string()]).transform((v) => v === true || v === "true").optional(),
-  limit: z.number().int().min(1).max(100).default(48),
+  limit: z.number().int().min(1).max(200).default(96),
 });
 
 export const searchShortTermSlips = createServerFn({ method: "GET" })
@@ -70,6 +71,10 @@ export const searchShortTermSlips = createServerFn({ method: "GET" })
     if (data.boat_draft !== undefined) q = q.or(`max_boat_draft_ft.is.null,water_depth_ft.gte.${data.boat_draft}`);
     if (data.guests !== undefined) q = q.gte("max_guests", data.guests);
     if (data.instant) q = q.eq("instant_book", true);
+    if (data.waterway) {
+      const safeW = data.waterway.replace(/[,()*.%\\]/g, " ").trim().slice(0, 80);
+      if (safeW) q = q.ilike("waterway", `%${safeW}%`);
+    }
     if (data.where) {
       const safe = data.where.replace(/[,()*.%\\]/g, " ").trim().slice(0, 80);
       if (safe) {
