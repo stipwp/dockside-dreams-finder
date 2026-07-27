@@ -79,19 +79,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Boat And Dock" },
+      { title: "DockFront — Rent a dock anywhere in the world" },
       {
         name: "description",
         content:
-          "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S.",
+          "Book private docks and slips by the night, worldwide — from Guatemala and the Bahamas to Croatia and Thailand.",
       },
       { name: "author", content: "DockFront" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "Boat And Dock" },
-      { name: "twitter:title", content: "Boat And Dock" },
-      { property: "og:description", content: "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S." },
-      { name: "twitter:description", content: "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S." },
+      { property: "og:title", content: "DockFront — Rent a dock anywhere in the world" },
+      { name: "twitter:title", content: "DockFront — Rent a dock anywhere in the world" },
+      { property: "og:description", content: "Book private docks and slips by the night, worldwide — from Guatemala and the Bahamas to Croatia and Thailand." },
+      { name: "twitter:description", content: "Book private docks and slips by the night, worldwide — from Guatemala and the Bahamas to Croatia and Thailand." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a44acd30-15d6-4650-a3a6-89354dc69dc5" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a44acd30-15d6-4650-a3a6-89354dc69dc5" },
     ],
@@ -102,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
       },
     ],
     scripts: [
@@ -115,7 +115,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           url: "https://boatanddock.lovable.app",
           potentialAction: {
             "@type": "SearchAction",
-            target: "https://boatanddock.lovable.app/listings?q={search_term_string}",
+            target: "https://boatanddock.lovable.app/rent?where={search_term_string}",
             "query-input": "required name=search_term_string",
           },
         }),
@@ -128,7 +128,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           name: "DockFront",
           url: "https://boatanddock.lovable.app",
           description:
-            "FSBO marketplace for waterfront homes with private docks and boat slips.",
+            "A global marketplace for booking private docks and boat slips by the night.",
         }),
       },
     ],

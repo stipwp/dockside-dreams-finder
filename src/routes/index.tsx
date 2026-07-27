@@ -3,58 +3,72 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { ListingCard } from "@/components/listing-card";
-import { listPublicListings } from "@/lib/listings.functions";
+import { DockCard } from "@/components/dock-card";
+import { searchShortTermSlips } from "@/lib/bookings.functions";
 import heroImg from "@/assets/hero-dock.jpg";
+import rioImg from "@/assets/dest-riodulce.jpg";
+import bahamasImg from "@/assets/dest-bahamas.jpg";
+import croatiaImg from "@/assets/dest-croatia.jpg";
+import thailandImg from "@/assets/dest-thailand.jpg";
 import floridaImg from "@/assets/region-florida.jpg";
-import chesapeakeImg from "@/assets/region-chesapeake.jpg";
-import pnwImg from "@/assets/region-pnw.jpg";
-import lakesImg from "@/assets/region-lakes.jpg";
-import { Search } from "lucide-react";
+import { Search, MapPin, Anchor, Ship, Zap, Waves, Sailboat, Home, Building2 } from "lucide-react";
 
-const featuredQO = queryOptions({
-  queryKey: ["listings", "featured"],
-  queryFn: () => listPublicListings({ data: { limit: 6 } }),
+const TITLE = "DockFront — Rent a dock anywhere in the world";
+const DESC =
+  "Book private docks and slips by the night, from Río Dulce to the Bahamas, Croatia and Thailand. Search by dates and your boat's length, beam and draft.";
+
+const docksQO = queryOptions({
+  queryKey: ["home", "docks"],
+  queryFn: () => searchShortTermSlips({ data: { limit: 8 } as never }),
 });
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Boat And Dock" },
-      {
-        name: "description",
-        content:
-          "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S.",
-      },
-      { property: "og:title", content: "Boat And Dock" },
-      {
-        property: "og:description",
-        content: "Find your next waterfront home or dock slip, listed directly by owners. Private FSBO marketplace for boat owners across the U.S.",
-      },
+      { title: TITLE },
+      { name: "description", content: DESC },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESC },
       { property: "og:url", content: "https://boatanddock.lovable.app/" },
     ],
     links: [{ rel: "canonical", href: "https://boatanddock.lovable.app/" }],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(featuredQO),
+  loader: ({ context }) => context.queryClient.ensureQueryData(docksQO),
   component: HomePage,
 });
 
-const REGIONS = [
-  { name: "Florida Intracoastal", count: "Coming soon", img: floridaImg },
-  { name: "Chesapeake Bay", count: "Coming soon", img: chesapeakeImg },
-  { name: "Pacific Northwest", count: "Coming soon", img: pnwImg },
-  { name: "Great Lakes", count: "Coming soon", img: lakesImg },
+const CATEGORIES = [
+  { label: "All docks", icon: Anchor, search: {} },
+  { label: "Instant book", icon: Zap, search: { instant: true } },
+  { label: "Deep water", icon: Waves, search: { boat_draft: 6 } },
+  { label: "Big boats 60′+", icon: Ship, search: { boat_length: 60 } },
+  { label: "Sailboat friendly", icon: Sailboat, search: { boat_draft: 5 } },
+  { label: "Liveaboard", icon: Home, search: { guests: 2 } },
+  { label: "Marinas", icon: Building2, search: { where: "marina" } },
+] as const;
+
+const DESTINATIONS = [
+  { name: "Río Dulce", country: "Guatemala", img: rioImg, blurb: "Jungle river hurricane hole" },
+  { name: "Nassau", country: "Bahamas", img: bahamasImg, blurb: "Turquoise island slips" },
+  { name: "Split", country: "Croatia", img: croatiaImg, blurb: "Adriatic old-town moorings" },
+  { name: "Phuket", country: "Thailand", img: thailandImg, blurb: "Andaman sea berths" },
+  { name: "Miami", country: "United States", img: floridaImg, blurb: "Intracoastal home docks" },
 ];
 
 function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      <SiteNav transparent />
+      <SiteNav />
       <Hero />
-      <FeaturedSection />
-      <RegionsSection />
-      <HowItWorksStrip />
-      <ListCTASection />
+      <CategoryStrip />
+      <main className="mx-auto max-w-[100rem] px-4 md:px-8">
+        <Suspense fallback={<Skeleton />}>
+          <DockGrid />
+        </Suspense>
+        <Destinations />
+        <HowItWorks />
+        <HostCTA />
+      </main>
       <SiteFooter />
     </div>
   );
@@ -62,315 +76,186 @@ function HomePage() {
 
 function Hero() {
   const navigate = useNavigate();
-  const [advanced, setAdvanced] = useState(false);
-  const [kind, setKind] = useState<"any" | "home" | "slip">("any");
-  const [q, setQ] = useState("");
-  const [state, setState] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minDockLen, setMinDockLen] = useState("");
-  const [minBoatLen, setMinBoatLen] = useState("");
-  const [minDepth, setMinDepth] = useState("");
-  const [power, setPower] = useState("");
-  const [covered, setCovered] = useState(false);
-  const [floating, setFloating] = useState(false);
-  const [liveaboard, setLiveaboard] = useState(false);
+  const [where, setWhere] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [boat, setBoat] = useState("");
 
-  function buildSearch() {
-    const s: Record<string, unknown> = {};
-    if (kind !== "any") s.kind = kind;
-    if (q) s.q = q;
-    if (state) s.state = state;
-    if (minPrice) s.minPrice = Number(minPrice);
-    if (maxPrice) s.maxPrice = Number(maxPrice);
-    if (minDockLen) s.minDockLen = Number(minDockLen);
-    if (minBoatLen) s.minBoatLen = Number(minBoatLen);
-    if (minDepth) s.minDepth = Number(minDepth);
-    if (power) s.power = power;
-    if (covered) s.covered = true;
-    if (floating) s.floating = true;
-    if (liveaboard) s.liveaboard_allowed = true;
-    return s;
-  }
-
-  function goList(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
-    navigate({ to: "/listings", search: buildSearch() as never });
-  }
-  function goMap() {
-    navigate({ to: "/map", search: buildSearch() as never });
+    const s: Record<string, unknown> = {};
+    if (where) s.where = where;
+    if (start) s.start = start;
+    if (end) s.end = end;
+    if (boat) s.boat_length = Number(boat);
+    navigate({ to: "/rent", search: s as never });
   }
 
   return (
-    <section className="relative min-h-[92vh] w-full overflow-hidden">
-      <img
-        src={heroImg}
-        alt="Private waterfront dock at dusk"
-        width={1920}
-        height={1280}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-nav/50 via-nav/35 to-nav/80" />
-
-      <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-6xl flex-col items-center justify-center px-4 pt-24 pb-16 text-center text-nav-foreground">
-        <p className="mb-5 text-xs font-medium uppercase tracking-[0.32em] text-teak">
-          For sale by owner · waterfront homes & dock slips
-        </p>
-        <div className="hairline-frame px-6 py-6 md:px-14 md:py-10">
-          <h1 className="font-serif text-5xl leading-[0.95] md:text-7xl lg:text-8xl">
-            LIVE ON
-            <br />
-            THE WATER
+    <section className="mx-auto max-w-[100rem] px-4 pt-6 md:px-8">
+      <div className="relative overflow-hidden rounded-2xl">
+        <img
+          src={heroImg}
+          alt="Private dock at dusk with a boat moored alongside"
+          width={1920}
+          height={1280}
+          className="h-[26rem] w-full object-cover md:h-[32rem]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
+        <div className="absolute inset-x-0 bottom-0 p-5 md:p-12">
+          <h1 className="max-w-2xl text-3xl font-extrabold leading-tight text-white md:text-5xl">
+            Rent a dock anywhere. Tie up tonight.
           </h1>
-        </div>
-        <p className="mt-6 max-w-xl text-sm text-nav-foreground/85 md:text-base">
-          Find your next waterfront home or dock slip. Listed direct by owners, for boat owners.
-        </p>
-
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={goMap}
-            className="rounded-sm bg-teak px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-teak-foreground transition-colors hover:bg-teak/90"
-          >
-            Search on map
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdvanced((a) => !a)}
-            className="rounded-sm border border-nav-foreground/60 bg-transparent px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-nav-foreground transition-colors hover:bg-nav-foreground/10"
-          >
-            {advanced ? "Hide advanced" : "Advanced search"}
-          </button>
-        </div>
-
-        <form
-          onSubmit={goList}
-          className="mt-6 w-full max-w-5xl rounded-sm bg-background/95 p-4 text-left text-foreground shadow-2xl backdrop-blur"
-        >
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-[10rem_1fr_10rem_auto]">
-            <select
-              value={kind}
-              onChange={(e) => setKind(e.target.value as "any" | "home" | "slip")}
-              className="h-11 rounded-sm border border-input bg-transparent px-3 text-sm"
-            >
-              <option value="any">All property types</option>
-              <option value="home">Waterfront homes</option>
-              <option value="slip">Dock slips</option>
-            </select>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="City, waterway, marina, keyword…"
-                className="h-11 w-full rounded-sm border border-input bg-transparent pl-9 pr-3 text-sm"
-              />
-            </div>
-            <input
-              value={state}
-              onChange={(e) => setState(e.target.value)}
-              placeholder="State"
-              className="h-11 rounded-sm border border-input bg-transparent px-3 text-sm"
-            />
-            <button
-              type="submit"
-              className="h-11 rounded-sm bg-nav px-6 text-xs font-semibold uppercase tracking-[0.16em] text-nav-foreground transition-colors hover:bg-nav/90"
-            >
-              Search
-            </button>
-          </div>
-
-          {advanced && (
-            <div className="mt-4 border-t border-border pt-4">
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <FieldMini label="Min price">
-                  <input type="number" min={0} value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className={hInput} placeholder="0" />
-                </FieldMini>
-                <FieldMini label="Max price">
-                  <input type="number" min={0} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className={hInput} placeholder="any" />
-                </FieldMini>
-                <FieldMini label="Min dock (ft)">
-                  <input type="number" min={0} value={minDockLen} onChange={(e) => setMinDockLen(e.target.value)} className={hInput} />
-                </FieldMini>
-                <FieldMini label="Max boat (ft)">
-                  <input type="number" min={0} value={minBoatLen} onChange={(e) => setMinBoatLen(e.target.value)} className={hInput} />
-                </FieldMini>
-                <FieldMini label="Min depth (ft)">
-                  <input type="number" min={0} step={0.5} value={minDepth} onChange={(e) => setMinDepth(e.target.value)} className={hInput} />
-                </FieldMini>
-                <FieldMini label="Shore power">
-                  <select value={power} onChange={(e) => setPower(e.target.value)} className={hInput}>
-                    <option value="">Any</option>
-                    <option value="30A">30 amp</option>
-                    <option value="50A">50 amp</option>
-                    <option value="100A">100 amp</option>
-                  </select>
-                </FieldMini>
-                <FieldMini label=" ">
-                  <label className="flex h-11 items-center gap-2 rounded-sm border border-input px-3 text-xs">
-                    <input type="checkbox" checked={covered} onChange={(e) => setCovered(e.target.checked)} className="accent-teak" />
-                    Covered slip
-                  </label>
-                </FieldMini>
-                <FieldMini label=" ">
-                  <label className="flex h-11 items-center gap-2 rounded-sm border border-input px-3 text-xs">
-                    <input type="checkbox" checked={floating} onChange={(e) => setFloating(e.target.checked)} className="accent-teak" />
-                    Floating dock
-                  </label>
-                </FieldMini>
-                <FieldMini label=" ">
-                  <label className="flex h-11 items-center gap-2 rounded-sm border border-input px-3 text-xs">
-                    <input type="checkbox" checked={liveaboard} onChange={(e) => setLiveaboard(e.target.checked)} className="accent-teak" />
-                    Liveaboard OK
-                  </label>
-                </FieldMini>
-              </div>
-            </div>
-          )}
-        </form>
-
-        <div className="mt-6 flex items-center gap-6 text-xs uppercase tracking-widest text-nav-foreground/70">
-          <Link to="/listings" className="hover:text-teak">Browse all listings →</Link>
-          <Link to="/list-your-property" className="hover:text-teak">List your property →</Link>
+          <p className="mt-3 max-w-xl text-sm text-white/85 md:text-base">
+            Private docks and slips by the night — Guatemala, the Bahamas, Croatia, Thailand and beyond.
+          </p>
         </div>
       </div>
+
+      <form
+        onSubmit={submit}
+        className="relative z-10 mx-auto -mt-8 grid max-w-5xl gap-1 rounded-2xl border border-border bg-background p-2 shadow-card md:grid-cols-[1.4fr_1fr_1fr_1fr_auto] md:rounded-full md:p-1.5"
+      >
+        <Field label="Where">
+          <input
+            value={where}
+            onChange={(e) => setWhere(e.target.value)}
+            placeholder="Search destinations"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </Field>
+        <Field label="Arrive">
+          <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+        </Field>
+        <Field label="Depart">
+          <input type="date" value={end} min={start || undefined} onChange={(e) => setEnd(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+        </Field>
+        <Field label="Your boat">
+          <input
+            type="number"
+            min={0}
+            value={boat}
+            onChange={(e) => setBoat(e.target.value)}
+            placeholder="Length in ft"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </Field>
+        <button className="mt-1 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:mt-0">
+          <Search className="h-4 w-4" strokeWidth={2.5} /> Search
+        </button>
+      </form>
     </section>
   );
 }
 
-const hInput = "h-11 w-full rounded-sm border border-input bg-transparent px-3 text-sm";
-
-function FieldMini({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block">
-      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+    <label className="cursor-text rounded-xl px-5 py-2.5 transition-colors hover:bg-muted md:rounded-full">
+      <span className="block text-[11px] font-bold uppercase tracking-wide">{label}</span>
       {children}
     </label>
   );
 }
 
-function FeaturedSection() {
+function CategoryStrip() {
+  const navigate = useNavigate();
   return (
-    <section className="mx-auto max-w-7xl px-4 py-24 md:px-8">
-      <div className="mb-12 flex items-end justify-between border-b border-border pb-6">
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-teak">
-            Handpicked
-          </p>
-          <h2 className="font-serif text-4xl md:text-5xl">Featured listings</h2>
-        </div>
-        <Link
-          to="/listings"
-          className="hidden text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground hover:text-teak md:block"
-        >
-          View all →
-        </Link>
+    <div className="sticky top-20 z-20 mt-8 border-y border-border bg-background/95 backdrop-blur">
+      <div className="no-scrollbar mx-auto flex max-w-[100rem] gap-8 overflow-x-auto px-4 py-3 md:px-8">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.label}
+            onClick={() => navigate({ to: "/rent", search: c.search as never })}
+            className="group flex shrink-0 flex-col items-center gap-1.5 border-b-2 border-transparent pb-2 text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+          >
+            <c.icon className="h-5 w-5" strokeWidth={1.8} />
+            <span className="whitespace-nowrap text-xs font-semibold">{c.label}</span>
+          </button>
+        ))}
       </div>
-      <Suspense fallback={<GridSkeleton />}>
-        <FeaturedGrid />
-      </Suspense>
+    </div>
+  );
+}
+
+function DockGrid() {
+  const { data } = useSuspenseQuery(docksQO);
+  return (
+    <section className="pt-10">
+      <div className="flex items-end justify-between gap-4">
+        <h2 className="text-xl font-bold md:text-2xl">Docks available now</h2>
+        <Link to="/rent" className="text-sm font-semibold underline">Show all</Link>
+      </div>
+      {data.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-dashed border-border p-14 text-center">
+          <p className="text-lg font-semibold">No docks listed yet.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Be the first host on DockFront.</p>
+          <Link to="/list-your-property" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground">
+            List your dock
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {data.map((l) => <DockCard key={l.id} l={l} />)}
+        </div>
+      )}
     </section>
   );
 }
 
-function FeaturedGrid() {
-  const { data } = useSuspenseQuery(featuredQO);
-  if (!data.length) {
-    return (
-      <div className="rounded-sm border border-dashed border-border bg-muted/40 p-16 text-center">
-        <p className="font-serif text-2xl text-foreground">No listings yet</p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Be the first to list a waterfront home or dock slip.
-        </p>
-        <Link
-          to="/list-your-property"
-          className="mt-6 inline-block rounded-sm bg-teak px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-teak-foreground"
-        >
-          List your property
-        </Link>
-      </div>
-    );
-  }
+function Destinations() {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {data.map((l) => (
-        <ListingCard key={l.id} l={l} />
-      ))}
-    </div>
-  );
-}
-
-function GridSkeleton() {
-  return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="aspect-[4/3] animate-pulse bg-muted" />
-      ))}
-    </div>
-  );
-}
-
-function RegionsSection() {
-  return (
-    <section className="bg-nav py-24 text-nav-foreground">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="mb-12 border-b border-white/10 pb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-teak">
-            Search by region
-          </p>
-          <h2 className="font-serif text-4xl md:text-5xl">
-            Some of the best cruising waters in the country
-          </h2>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {REGIONS.map((r) => (
-            <Link
-              key={r.name}
-              to="/listings"
-              className="group relative block aspect-[4/5] overflow-hidden"
-            >
+    <section className="pt-16">
+      <h2 className="text-xl font-bold md:text-2xl">Explore waters worldwide</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Cruising grounds where boaters are looking for a berth.</p>
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {DESTINATIONS.map((d) => (
+          <Link
+            key={d.name}
+            to="/rent"
+            search={{ where: d.name } as never}
+            className="group overflow-hidden rounded-2xl"
+          >
+            <div className="aspect-[4/3] overflow-hidden rounded-2xl">
               <img
-                src={r.img}
-                alt={r.name}
+                src={d.img}
+                alt={`Docks in ${d.name}, ${d.country}`}
                 loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                width={1024}
+                height={768}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-nav via-nav/20 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-5">
-                <p className="font-serif text-2xl text-nav-foreground">{r.name}</p>
-                <p className="mt-1 text-xs uppercase tracking-widest text-teak">
-                  {r.count}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+            <div className="pt-3">
+              <p className="flex items-center gap-1.5 text-[15px] font-semibold">
+                <MapPin className="h-3.5 w-3.5 text-primary" /> {d.name}, {d.country}
+              </p>
+              <p className="text-sm text-muted-foreground">{d.blurb}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );
 }
 
-function HowItWorksStrip() {
-  const steps = [
-    { n: "01", t: "Post your listing", d: "Photos, price, dock specs — takes about 5 minutes." },
-    { n: "02", t: "Talk directly to buyers", d: "Every inquiry goes straight to your inbox." },
-    { n: "03", t: "Close on your terms", d: "No agents, no commissions, no middlemen." },
-  ];
+const STEPS = [
+  { t: "Tell us your boat", d: "Length, beam, draft and how many are aboard. We only show docks that actually fit." },
+  { t: "Book or request", d: "Instant book where hosts allow it, or send a request with your arrival plan." },
+  { t: "Tie up and enjoy", d: "Message your host, get gate codes and power details, and settle in." },
+];
+
+function HowItWorks() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-24 md:px-8">
-      <div className="mb-12 text-center">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-teak">
-          How it works
-        </p>
-        <h2 className="font-serif text-4xl md:text-5xl">FSBO. The way it should be.</h2>
-      </div>
-      <div className="grid gap-10 md:grid-cols-3">
-        {steps.map((s) => (
-          <div key={s.n} className="border-t border-teak pt-6">
-            <p className="font-serif text-5xl text-teak">{s.n}</p>
-            <h3 className="mt-4 font-serif text-2xl">{s.t}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
+    <section className="pt-16">
+      <h2 className="text-xl font-bold md:text-2xl">How DockFront works</h2>
+      <div className="mt-6 grid gap-5 md:grid-cols-3">
+        {STEPS.map((s, i) => (
+          <div key={s.t} className="rounded-2xl border border-border p-6">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+              {i + 1}
+            </span>
+            <p className="mt-4 text-lg font-bold">{s.t}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">{s.d}</p>
           </div>
         ))}
       </div>
@@ -378,30 +263,33 @@ function HowItWorksStrip() {
   );
 }
 
-function ListCTASection() {
+function HostCTA() {
   return (
-    <section
-      className="relative overflow-hidden bg-cover bg-center py-24"
-      style={{ backgroundImage: `linear-gradient(rgba(11,31,51,0.85), rgba(11,31,51,0.85)), url(${heroImg})` }}
-    >
-      <div className="mx-auto max-w-3xl px-4 text-center text-nav-foreground md:px-8">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-teak">
-          Own the dock. Own the sale.
-        </p>
-        <h2 className="font-serif text-4xl md:text-6xl">
-          List your waterfront property today.
-        </h2>
-        <p className="mx-auto mt-6 max-w-xl text-nav-foreground/80">
-          Free to post. Talk directly to boat owners looking for their next slip or
-          waterfront home.
-        </p>
+    <section className="pt-16">
+      <div className="flex flex-wrap items-center justify-between gap-6 rounded-2xl bg-foreground px-8 py-12 text-background">
+        <div>
+          <h2 className="text-2xl font-extrabold md:text-3xl">Your dock sits empty. Boaters need it.</h2>
+          <p className="mt-2 max-w-xl text-sm opacity-80">
+            List your private dock, slip or mooring in minutes. Set your nightly price, your dates and your boat-size limits.
+          </p>
+        </div>
         <Link
           to="/list-your-property"
-          className="mt-10 inline-block rounded-sm bg-teak px-8 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-teak-foreground transition-colors hover:bg-teak/90"
+          className="rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Get started
+          Start hosting
         </Link>
       </div>
     </section>
+  );
+}
+
+function Skeleton() {
+  return (
+    <div className="grid gap-x-5 gap-y-8 pt-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="aspect-square animate-pulse rounded-xl bg-muted" />
+      ))}
+    </div>
   );
 }

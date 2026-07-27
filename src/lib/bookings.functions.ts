@@ -57,7 +57,7 @@ export const searchShortTermSlips = createServerFn({ method: "GET" })
     let q = supabase
       .from("listings")
       .select(
-        "id,title,city,state,waterway,cover_photo_url,lat,lng,nightly_price_cents,weekly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,max_guests,dock_length_ft,water_depth_ft,covered,floating,water_hookup,power,featured,created_at",
+        "id,title,city,state,country,waterway,cover_photo_url,lat,lng,nightly_price_cents,weekly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,max_guests,dock_length_ft,water_depth_ft,covered,floating,water_hookup,power,featured,created_at",
       )
       .eq("status", "published")
       .eq("listing_type", "slip_short_term")
@@ -79,7 +79,7 @@ export const searchShortTermSlips = createServerFn({ method: "GET" })
       const safe = data.where.replace(/[,()*.%\\]/g, " ").trim().slice(0, 80);
       if (safe) {
         const like = `%${safe}%`;
-        q = q.or(["title", "city", "waterway", "state"].map((c) => `${c}.ilike.${like}`).join(","));
+        q = q.or(["title", "city", "waterway", "state", "country"].map((c) => `${c}.ilike.${like}`).join(","));
       }
     }
 
