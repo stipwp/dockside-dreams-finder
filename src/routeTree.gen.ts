@@ -28,9 +28,12 @@ import { Route as RentIdRouteImport } from './routes/rent_.$id'
 import { Route as ListingsIdRouteImport } from './routes/listings_.$id'
 import { Route as AuthenticatedWishlistsRouteImport } from './routes/_authenticated/wishlists'
 import { Route as AuthenticatedTripsRouteImport } from './routes/_authenticated/trips'
+import { Route as AuthenticatedReviewsRouteImport } from './routes/_authenticated/reviews'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedListingsNewRouteImport } from './routes/_authenticated/listings.new'
+import { Route as AuthenticatedBookingsIdRouteImport } from './routes/_authenticated/bookings_.$id'
 import { Route as AuthenticatedListingsIdEditRouteImport } from './routes/_authenticated/listings.$id.edit'
 
 const TermsRoute = TermsRouteImport.update({
@@ -127,6 +130,11 @@ const AuthenticatedTripsRoute = AuthenticatedTripsRouteImport.update({
   path: '/trips',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReviewsRoute = AuthenticatedReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -137,12 +145,22 @@ const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedListingsNewRoute =
   AuthenticatedListingsNewRouteImport.update({
     id: '/listings/new',
     path: '/listings/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedBookingsIdRoute = AuthenticatedBookingsIdRouteImport.update({
+  id: '/bookings_/$id',
+  path: '/bookings/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedListingsIdEditRoute =
   AuthenticatedListingsIdEditRouteImport.update({
     id: '/listings/$id/edit',
@@ -165,12 +183,15 @@ export interface FileRoutesByFullPath {
   '/rent': typeof RentRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
   '/trips': typeof AuthenticatedTripsRoute
   '/wishlists': typeof AuthenticatedWishlistsRoute
   '/listings/$id': typeof ListingsIdRoute
   '/rent/$id': typeof RentIdRoute
+  '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/listings/new': typeof AuthenticatedListingsNewRoute
   '/listings/$id/edit': typeof AuthenticatedListingsIdEditRoute
 }
@@ -189,12 +210,15 @@ export interface FileRoutesByTo {
   '/rent': typeof RentRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
   '/trips': typeof AuthenticatedTripsRoute
   '/wishlists': typeof AuthenticatedWishlistsRoute
   '/listings/$id': typeof ListingsIdRoute
   '/rent/$id': typeof RentIdRoute
+  '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/listings/new': typeof AuthenticatedListingsNewRoute
   '/listings/$id/edit': typeof AuthenticatedListingsIdEditRoute
 }
@@ -215,12 +239,15 @@ export interface FileRoutesById {
   '/rent': typeof RentRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/reviews': typeof AuthenticatedReviewsRoute
   '/_authenticated/trips': typeof AuthenticatedTripsRoute
   '/_authenticated/wishlists': typeof AuthenticatedWishlistsRoute
   '/listings_/$id': typeof ListingsIdRoute
   '/rent_/$id': typeof RentIdRoute
+  '/_authenticated/bookings_/$id': typeof AuthenticatedBookingsIdRoute
   '/_authenticated/listings/new': typeof AuthenticatedListingsNewRoute
   '/_authenticated/listings/$id/edit': typeof AuthenticatedListingsIdEditRoute
 }
@@ -241,12 +268,15 @@ export interface FileRouteTypes {
     | '/rent'
     | '/sitemap.xml'
     | '/terms'
+    | '/account'
     | '/bookings'
     | '/dashboard'
+    | '/reviews'
     | '/trips'
     | '/wishlists'
     | '/listings/$id'
     | '/rent/$id'
+    | '/bookings/$id'
     | '/listings/new'
     | '/listings/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -265,12 +295,15 @@ export interface FileRouteTypes {
     | '/rent'
     | '/sitemap.xml'
     | '/terms'
+    | '/account'
     | '/bookings'
     | '/dashboard'
+    | '/reviews'
     | '/trips'
     | '/wishlists'
     | '/listings/$id'
     | '/rent/$id'
+    | '/bookings/$id'
     | '/listings/new'
     | '/listings/$id/edit'
   id:
@@ -290,12 +323,15 @@ export interface FileRouteTypes {
     | '/rent'
     | '/sitemap.xml'
     | '/terms'
+    | '/_authenticated/account'
     | '/_authenticated/bookings'
     | '/_authenticated/dashboard'
+    | '/_authenticated/reviews'
     | '/_authenticated/trips'
     | '/_authenticated/wishlists'
     | '/listings_/$id'
     | '/rent_/$id'
+    | '/_authenticated/bookings_/$id'
     | '/_authenticated/listings/new'
     | '/_authenticated/listings/$id/edit'
   fileRoutesById: FileRoutesById
@@ -455,6 +491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTripsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reviews': {
+      id: '/_authenticated/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AuthenticatedReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -469,11 +512,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBookingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/listings/new': {
       id: '/_authenticated/listings/new'
       path: '/listings/new'
       fullPath: '/listings/new'
       preLoaderRoute: typeof AuthenticatedListingsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bookings_/$id': {
+      id: '/_authenticated/bookings_/$id'
+      path: '/bookings/$id'
+      fullPath: '/bookings/$id'
+      preLoaderRoute: typeof AuthenticatedBookingsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/listings/$id/edit': {
@@ -487,19 +544,25 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedReviewsRoute: typeof AuthenticatedReviewsRoute
   AuthenticatedTripsRoute: typeof AuthenticatedTripsRoute
   AuthenticatedWishlistsRoute: typeof AuthenticatedWishlistsRoute
+  AuthenticatedBookingsIdRoute: typeof AuthenticatedBookingsIdRoute
   AuthenticatedListingsNewRoute: typeof AuthenticatedListingsNewRoute
   AuthenticatedListingsIdEditRoute: typeof AuthenticatedListingsIdEditRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedReviewsRoute: AuthenticatedReviewsRoute,
   AuthenticatedTripsRoute: AuthenticatedTripsRoute,
   AuthenticatedWishlistsRoute: AuthenticatedWishlistsRoute,
+  AuthenticatedBookingsIdRoute: AuthenticatedBookingsIdRoute,
   AuthenticatedListingsNewRoute: AuthenticatedListingsNewRoute,
   AuthenticatedListingsIdEditRoute: AuthenticatedListingsIdEditRoute,
 }

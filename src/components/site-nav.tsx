@@ -94,10 +94,12 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
               <div className="absolute right-0 top-14 w-60 overflow-hidden rounded-xl border border-border bg-popover py-2 shadow-card">
                 {userEmail ? (
                   <>
+                    <MenuLink to="/account" onClick={() => setOpen(false)} bold>Account</MenuLink>
                     <MenuLink to="/trips" onClick={() => setOpen(false)}>Your trips</MenuLink>
                     <MenuLink to="/wishlists" onClick={() => setOpen(false)}>Wishlist</MenuLink>
                     <MenuLink to="/bookings" onClick={() => setOpen(false)}>Booking requests</MenuLink>
                     <MenuLink to="/dashboard" onClick={() => setOpen(false)}>Manage docks</MenuLink>
+                    <MenuLink to="/reviews" onClick={() => setOpen(false)}>Reviews</MenuLink>
                     <div className="my-2 border-t border-border" />
                     <MenuLink to="/list-your-property" onClick={() => setOpen(false)}>List your dock</MenuLink>
                     <MenuLink to="/pricing" onClick={() => setOpen(false)}>Plans & pricing</MenuLink>
