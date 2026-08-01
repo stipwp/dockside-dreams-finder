@@ -162,22 +162,64 @@ function Body({ id }: { id: string }) {
       </div>
 
       {/* Photo mosaic */}
-      <div className="mt-4 grid gap-2 overflow-hidden rounded-2xl md:grid-cols-4 md:grid-rows-2">
-        <div className="aspect-[4/3] bg-muted md:col-span-2 md:row-span-2 md:aspect-auto">
-          {photos[0] ? (
-            <img src={photos[0].url} alt={l.title} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <Anchor className="h-14 w-14" strokeWidth={1} />
-            </div>
-          )}
+      <div className="relative">
+        <div className="mt-4 grid gap-2 overflow-hidden rounded-2xl md:grid-cols-4 md:grid-rows-2">
+          <button
+            type="button"
+            onClick={() => photos.length && setLightbox(0)}
+            aria-label="View photo 1"
+            className="aspect-[4/3] bg-muted md:col-span-2 md:row-span-2 md:aspect-auto"
+          >
+            {photos[0] ? (
+              <img
+                src={photos[0].url}
+                alt={l.title}
+                className="h-full w-full object-cover transition-opacity hover:opacity-90"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <Anchor className="h-14 w-14" strokeWidth={1} />
+              </div>
+            )}
+          </button>
+          {photos.slice(1, 5).map((p, i) => (
+            <button
+              type="button"
+              key={p.id}
+              onClick={() => setLightbox(i + 1)}
+              aria-label={`View photo ${i + 2}`}
+              className="hidden aspect-[4/3] bg-muted md:block"
+            >
+              <img
+                src={p.url}
+                alt={`${l.title} photo ${i + 2}`}
+                loading="lazy"
+                className="h-full w-full object-cover transition-opacity hover:opacity-90"
+              />
+            </button>
+          ))}
         </div>
-        {photos.slice(1, 5).map((p, i) => (
-          <div key={p.id} className="hidden aspect-[4/3] bg-muted md:block">
-            <img src={p.url} alt={`${l.title} photo ${i + 2}`} loading="lazy" className="h-full w-full object-cover" />
-          </div>
-        ))}
+        {photos.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setLightbox(0)}
+            className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-lg border border-foreground/15 bg-background px-4 py-2 text-sm font-semibold shadow-card transition-transform hover:scale-[1.02]"
+          >
+            <Grid2x2 className="h-4 w-4" /> Show all {photos.length} photos
+          </button>
+        )}
       </div>
+
+      {lightbox !== null && (
+        <PhotoLightbox
+          photos={photos}
+          index={lightbox}
+          title={l.title}
+          onClose={() => setLightbox(null)}
+          onIndexChange={setLightbox}
+        />
+      )}
+
 
       <div className="grid gap-12 pt-8 lg:grid-cols-[1fr_26rem]">
         <div className="min-w-0">
