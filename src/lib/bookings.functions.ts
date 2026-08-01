@@ -57,7 +57,7 @@ export const searchShortTermSlips = createServerFn({ method: "GET" })
     let q = supabase
       .from("listings")
       .select(
-        "id,title,city,state,country,waterway,cover_photo_url,lat,lng,nightly_price_cents,weekly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,max_guests,dock_length_ft,water_depth_ft,covered,floating,water_hookup,power,featured,created_at",
+        "id,title,city,state,country,waterway,cover_photo_url,lat,lng,nightly_price_cents,weekly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,max_guests,dock_length_ft,water_depth_ft,covered,floating,water_hookup,power,featured,is_demo,rating_avg,rating_count,created_at",
       )
       .eq("status", "published")
       .eq("listing_type", "slip_short_term")
@@ -167,13 +167,15 @@ export const createBookingRequest = createServerFn({ method: "POST" })
 
     const { data: listing, error: le } = await context.supabase
       .from("listings")
-      .select("id,owner_id,status,listing_type,nightly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,water_depth_ft,max_guests")
+      .select("id,owner_id,is_demo,status,listing_type,nightly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,water_depth_ft,max_guests")
       .eq("id", data.listing_id)
       .eq("status", "published")
       .maybeSingle();
     if (le) throw new Error(le.message);
     if (!listing) throw new Error("Listing not available.");
     if (listing.listing_type !== "slip_short_term") throw new Error("This listing does not accept bookings.");
+    if (listing.is_demo || !listing.owner_id)
+      throw new Error("This is a sample dock we use to demo DockFront — it can't be booked. Try a host-listed dock.");
     if (listing.owner_id === context.userId) throw new Error("You can't book your own dock.");
     if (!listing.nightly_price_cents) throw new Error("Listing has no nightly price set.");
     if (listing.min_nights && nights < listing.min_nights) throw new Error(`Minimum stay is ${listing.min_nights} nights.`);

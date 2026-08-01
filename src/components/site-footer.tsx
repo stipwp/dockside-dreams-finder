@@ -47,6 +47,7 @@ export function SiteFooter() {
               <li><Link to="/list-your-property" className="hover:text-foreground hover:underline">List your dock</Link></li>
               <li><Link to="/dashboard" className="hover:text-foreground hover:underline">Manage your docks</Link></li>
               <li><Link to="/bookings" className="hover:text-foreground hover:underline">Booking requests</Link></li>
+              <li><Link to="/pricing" className="hover:text-foreground hover:underline">Plans & pricing</Link></li>
               <li><Link to="/how-it-works" className="hover:text-foreground hover:underline">How hosting works</Link></li>
             </ul>
           </div>
@@ -54,9 +55,14 @@ export function SiteFooter() {
             <p className="text-xs font-bold uppercase tracking-wider">DockFront</p>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li><Link to="/about" className="hover:text-foreground hover:underline">About</Link></li>
+              <li><Link to="/help" className="hover:text-foreground hover:underline">Help centre</Link></li>
               <li><Link to="/contact" className="hover:text-foreground hover:underline">Contact & support</Link></li>
               <li><Link to="/rent" className="hover:text-foreground hover:underline">Find a dock</Link></li>
               <li><Link to="/trips" className="hover:text-foreground hover:underline">Your trips</Link></li>
+              <li className="flex gap-3 pt-1">
+                <Link to="/terms" className="hover:text-foreground hover:underline">Terms</Link>
+                <Link to="/privacy" className="hover:text-foreground hover:underline">Privacy</Link>
+              </li>
             </ul>
           </div>
         </div>
