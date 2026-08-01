@@ -38,7 +38,7 @@ const listingQO = (id: string) =>
     queryFn: () => getPublicListing({ data: { id } }),
   });
 
-export const Route = createFileRoute("/rent/$id")({
+export const Route = createFileRoute("/rent_/$id")({
   loader: async ({ context, params }) => {
     const res = await context.queryClient.ensureQueryData(listingQO(params.id));
     if (!res) throw notFound();
