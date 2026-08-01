@@ -1,15 +1,20 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useMemo, useState } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { DockCard } from "@/components/dock-card";
+import { PhotoLightbox } from "@/components/photo-lightbox";
+import { AvailabilityCalendar } from "@/components/availability-calendar";
 import { getPublicListing } from "@/lib/listings.functions";
-import { createBookingRequest } from "@/lib/bookings.functions";
+import { createBookingRequest, searchShortTermSlips } from "@/lib/bookings.functions";
 import { formatPrice, locationLine } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
   Anchor,
+  CalendarDays,
+  Grid2x2,
   Heart,
   MapPin,
   Ruler,
@@ -25,6 +30,7 @@ import {
   Ship,
 } from "lucide-react";
 import { toast } from "sonner";
+
 
 const listingQO = (id: string) =>
   queryOptions({
