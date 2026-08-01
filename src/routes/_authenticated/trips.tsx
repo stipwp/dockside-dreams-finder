@@ -1,61 +1,71 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { listMyTrips, cancelBooking } from "@/lib/bookings.functions";
+import { listMyTrips } from "@/lib/bookings.functions";
 import { formatPrice } from "@/lib/format";
-import { toast } from "sonner";
+import { ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/trips")({
   head: () => ({ meta: [{ title: "Your trips — DockFront" }, { name: "robots", content: "noindex" }] }),
   component: Trips,
 });
 
+const STATUS_STYLES: Record<string, string> = {
+  accepted: "bg-primary/10 text-primary",
+  pending: "bg-muted text-foreground",
+};
+
 function Trips() {
-  const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["my-trips"], queryFn: () => listMyTrips() });
-  const cancel = useMutation({
-    mutationFn: (id: string) => cancelBooking({ data: { id } }),
-    onSuccess: () => { toast.success("Cancelled."); qc.invalidateQueries({ queryKey: ["my-trips"] }); },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
-  });
+  const fetchTrips = useServerFn(listMyTrips);
+  const { data, isLoading } = useQuery({ queryKey: ["my-trips"], queryFn: () => fetchTrips() });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = (data ?? []).filter(
+    (b) => b.end_date >= today && (b.status === "pending" || b.status === "accepted"),
+  );
+  const past = (data ?? []).filter((b) => !upcoming.includes(b));
 
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <main className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teak">Traveler</p>
-        <h1 className="mt-2 font-serif text-4xl md:text-5xl">Your trips</h1>
-        <div className="mt-4 flex gap-4 text-xs uppercase tracking-widest">
-          <Link to="/dashboard" className="text-muted-foreground hover:text-teak">Owner dashboard</Link>
-          <Link to="/bookings" className="text-muted-foreground hover:text-teak">Host bookings</Link>
+      <main className="mx-auto max-w-4xl px-4 py-10 md:px-8">
+        <h1 className="text-3xl font-extrabold tracking-tight">Trips</h1>
+        <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold text-muted-foreground">
+          <Link to="/account" className="hover:text-foreground">Account</Link>
+          <Link to="/bookings" className="hover:text-foreground">Booking requests</Link>
+          <Link to="/reviews" className="hover:text-foreground">Reviews</Link>
         </div>
 
-        {isLoading && <p className="mt-8 text-muted-foreground">Loading…</p>}
+        {isLoading && <p className="mt-8 text-muted-foreground">Loading your trips…</p>}
+
         {data && data.length === 0 && (
-          <div className="mt-12 rounded-sm border border-dashed border-border p-16 text-center">
-            <p className="font-serif text-2xl">No trips yet.</p>
-            <Link to="/rent" className="mt-6 inline-block rounded-sm bg-teak px-6 py-3 text-xs font-semibold uppercase tracking-widest text-teak-foreground">Find a dock</Link>
+          <div className="mt-10 rounded-2xl border border-dashed border-border p-14 text-center">
+            <p className="text-xl font-bold">No trips booked yet</p>
+            <p className="mt-2 text-sm text-muted-foreground">Time to find a slip for your next passage.</p>
+            <Link
+              to="/rent"
+              className="mt-6 inline-block rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
+            >
+              Find a dock
+            </Link>
           </div>
         )}
-        {data && data.length > 0 && (
-          <div className="mt-10 divide-y divide-border ring-1 ring-border">
-            {data.map((b) => (
-              <div key={b.id} className="flex flex-wrap items-center gap-4 p-4">
-                <div className="h-20 w-28 flex-shrink-0 overflow-hidden bg-muted">
-                  {b.listings?.cover_photo_url && <img src={b.listings.cover_photo_url} alt="" className="h-full w-full object-cover" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className={"inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest " + statusClass(b.status)}>{b.status}</span>
-                  <p className="mt-1 truncate font-serif text-lg">{b.listings?.title ?? "Listing"}</p>
-                  <p className="text-xs text-muted-foreground">{b.start_date} → {b.end_date} · {b.nights} night{b.nights === 1 ? "" : "s"} · {formatPrice(b.total_cents)}</p>
-                </div>
-                {(b.status === "pending" || b.status === "accepted") && (
-                  <button onClick={() => { if (confirm("Cancel this trip?")) cancel.mutate(b.id); }} className="rounded-sm bg-muted px-3 py-2 text-xs uppercase tracking-widest ring-1 ring-border hover:bg-destructive hover:text-destructive-foreground">Cancel</button>
-                )}
-              </div>
+
+        {upcoming.length > 0 && (
+          <Section title="Upcoming">
+            {upcoming.map((b) => (
+              <TripRow key={b.id} b={b} />
             ))}
-          </div>
+          </Section>
+        )}
+        {past.length > 0 && (
+          <Section title="Where you've been">
+            {past.map((b) => (
+              <TripRow key={b.id} b={b} />
+            ))}
+          </Section>
         )}
       </main>
       <SiteFooter />
@@ -63,9 +73,52 @@ function Trips() {
   );
 }
 
-function statusClass(s: string) {
-  if (s === "accepted") return "bg-teak text-teak-foreground";
-  if (s === "pending") return "bg-nav text-nav-foreground";
-  if (s === "cancelled" || s === "declined" || s === "expired") return "bg-muted text-muted-foreground";
-  return "bg-muted";
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-10">
+      <h2 className="text-lg font-bold">{title}</h2>
+      <div className="mt-4 space-y-3">{children}</div>
+    </section>
+  );
+}
+
+type Trip = {
+  id: string;
+  start_date: string;
+  end_date: string;
+  nights: number;
+  total_cents: number;
+  status: string;
+  listings: { title: string | null; city: string | null; state: string | null; cover_photo_url: string | null } | null;
+};
+
+function TripRow({ b }: { b: Trip }) {
+  return (
+    <Link
+      to="/bookings/$id"
+      params={{ id: b.id }}
+      className="flex items-center gap-4 rounded-2xl border border-border p-3 transition-shadow hover:shadow-card"
+    >
+      <div className="h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-muted">
+        {b.listings?.cover_photo_url && (
+          <img src={b.listings.cover_photo_url} alt="" className="h-full w-full object-cover" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <span
+          className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
+            STATUS_STYLES[b.status] ?? "bg-muted text-muted-foreground"
+          }`}
+        >
+          {b.status}
+        </span>
+        <p className="mt-1 truncate text-lg font-bold">{b.listings?.title ?? "Dock"}</p>
+        <p className="text-sm text-muted-foreground">
+          {[b.listings?.city, b.listings?.state].filter(Boolean).join(", ")} · {b.start_date} → {b.end_date} ·{" "}
+          {b.nights} night{b.nights === 1 ? "" : "s"} · {formatPrice(b.total_cents)}
+        </p>
+      </div>
+      <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+    </Link>
+  );
 }
