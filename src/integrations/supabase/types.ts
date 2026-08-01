@@ -152,6 +152,50 @@ export type Database = {
           },
         ]
       }
+      featured_placements: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          ends_at: string
+          id: string
+          listing_id: string
+          provider_payment_id: string | null
+          starts_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          ends_at: string
+          id?: string
+          listing_id: string
+          provider_payment_id?: string | null
+          starts_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          ends_at?: string
+          id?: string
+          listing_id?: string
+          provider_payment_id?: string | null
+          starts_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_placements_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           created_at: string
@@ -275,6 +319,7 @@ export type Database = {
           advance_notice_hours: number
           bathrooms: number | null
           bedrooms: number | null
+          cancellation_policy: string
           city: string | null
           cleaning_fee_cents: number
           contact_email: string | null
@@ -288,8 +333,10 @@ export type Database = {
           dock_length_ft: number | null
           featured: boolean
           floating: boolean | null
+          house_rules: string | null
           id: string
           instant_book: boolean
+          is_demo: boolean
           kind: Database["public"]["Enums"]["listing_kind"]
           lat: number | null
           listing_type: Database["public"]["Enums"]["listing_type"] | null
@@ -303,10 +350,12 @@ export type Database = {
           max_nights: number | null
           min_nights: number
           nightly_price_cents: number | null
-          owner_id: string
+          owner_id: string | null
           power: string | null
           price_cents: number
           price_period: Database["public"]["Enums"]["price_period"] | null
+          rating_avg: number | null
+          rating_count: number
           sqft: number | null
           state: string | null
           status: Database["public"]["Enums"]["listing_status"]
@@ -323,6 +372,7 @@ export type Database = {
           advance_notice_hours?: number
           bathrooms?: number | null
           bedrooms?: number | null
+          cancellation_policy?: string
           city?: string | null
           cleaning_fee_cents?: number
           contact_email?: string | null
@@ -336,8 +386,10 @@ export type Database = {
           dock_length_ft?: number | null
           featured?: boolean
           floating?: boolean | null
+          house_rules?: string | null
           id?: string
           instant_book?: boolean
+          is_demo?: boolean
           kind: Database["public"]["Enums"]["listing_kind"]
           lat?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
@@ -351,10 +403,12 @@ export type Database = {
           max_nights?: number | null
           min_nights?: number
           nightly_price_cents?: number | null
-          owner_id: string
+          owner_id?: string | null
           power?: string | null
           price_cents?: number
           price_period?: Database["public"]["Enums"]["price_period"] | null
+          rating_avg?: number | null
+          rating_count?: number
           sqft?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
@@ -371,6 +425,7 @@ export type Database = {
           advance_notice_hours?: number
           bathrooms?: number | null
           bedrooms?: number | null
+          cancellation_policy?: string
           city?: string | null
           cleaning_fee_cents?: number
           contact_email?: string | null
@@ -384,8 +439,10 @@ export type Database = {
           dock_length_ft?: number | null
           featured?: boolean
           floating?: boolean | null
+          house_rules?: string | null
           id?: string
           instant_book?: boolean
+          is_demo?: boolean
           kind?: Database["public"]["Enums"]["listing_kind"]
           lat?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
@@ -399,10 +456,12 @@ export type Database = {
           max_nights?: number | null
           min_nights?: number
           nightly_price_cents?: number | null
-          owner_id?: string
+          owner_id?: string | null
           power?: string | null
           price_cents?: number
           price_period?: Database["public"]["Enums"]["price_period"] | null
+          rating_avg?: number | null
+          rating_count?: number
           sqft?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
@@ -443,6 +502,132 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          body: string | null
+          booking_id: string | null
+          created_at: string
+          id: string
+          is_demo: boolean
+          listing_id: string
+          rating: number
+          reviewer_id: string | null
+          reviewer_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          is_demo?: boolean
+          listing_id: string
+          rating: number
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          is_demo?: boolean
+          listing_id?: string
+          rating?: number
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_searches: {
+        Row: {
+          alerts_enabled: boolean
+          created_at: string
+          id: string
+          name: string
+          params: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alerts_enabled?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          params?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alerts_enabled?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          params?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          interval: string
+          provider: string | null
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          tier: Database["public"]["Enums"]["plan_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          interval?: string
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tier?: Database["public"]["Enums"]["plan_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          interval?: string
+          provider?: string | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tier?: Database["public"]["Enums"]["plan_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -469,6 +654,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_tier: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["plan_tier"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -488,7 +677,9 @@ export type Database = {
       listing_kind: "home" | "slip"
       listing_status: "draft" | "published" | "sold_rented"
       listing_type: "home_sale" | "slip_lease" | "slip_short_term"
+      plan_tier: "free" | "host_pro" | "captain"
       price_period: "sale" | "month" | "season"
+      subscription_status: "active" | "trialing" | "past_due" | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -627,7 +818,9 @@ export const Constants = {
       listing_kind: ["home", "slip"],
       listing_status: ["draft", "published", "sold_rented"],
       listing_type: ["home_sale", "slip_lease", "slip_short_term"],
+      plan_tier: ["free", "host_pro", "captain"],
       price_period: ["sale", "month", "season"],
+      subscription_status: ["active", "trialing", "past_due", "canceled"],
     },
   },
 } as const

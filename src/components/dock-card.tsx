@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Anchor, Heart, Star, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { formatPrice, locationLine } from "@/lib/format";
+import { useFavorites } from "@/hooks/use-favorites";
 
 export type DockCardListing = {
   id: string;
@@ -15,17 +16,32 @@ export type DockCardListing = {
   instant_book?: boolean | null;
   max_boat_length_ft?: number | null;
   water_depth_ft?: number | null;
+  rating_avg?: number | null;
+  rating_count?: number | null;
 };
 
 export function DockCard({ l, compact }: { l: DockCardListing; compact?: boolean }) {
-  const [saved, setSaved] = useState(false);
+  const { isSaved, toggle } = useFavorites();
+  const navigate = useNavigate();
+  const saved = isSaved(l.id);
+
+  async function onToggle() {
+    const res = await toggle(l.id);
+    if (res.needsAuth) {
+      toast.error("Sign in to save docks to your wishlist.");
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (res.error) toast.error("Couldn't update your wishlist.");
+  }
+
   return (
     <div className="group relative">
       <button
         type="button"
         aria-label={saved ? `Remove ${l.title} from saved` : `Save ${l.title}`}
         aria-pressed={saved}
-        onClick={() => setSaved((s) => !s)}
+        onClick={onToggle}
         className="absolute right-3 top-3 z-10 rounded-full p-1.5 text-white/90 transition-transform hover:scale-110"
       >
         <Heart
@@ -54,7 +70,8 @@ export function DockCard({ l, compact }: { l: DockCardListing; compact?: boolean
           <div className="flex items-start justify-between gap-2">
             <p className="truncate text-[15px] font-semibold">{locationLine(l) || l.title}</p>
             <span className="flex shrink-0 items-center gap-1 text-sm">
-              <Star className="h-3.5 w-3.5 fill-foreground" /> New
+              <Star className="h-3.5 w-3.5 fill-foreground" />
+              {l.rating_count ? Number(l.rating_avg ?? 0).toFixed(2) : "New"}
             </span>
           </div>
           <p className="truncate text-sm text-muted-foreground">{l.title}</p>

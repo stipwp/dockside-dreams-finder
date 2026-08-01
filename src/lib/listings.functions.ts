@@ -132,19 +132,27 @@ export const getPublicListing = createServerFn({ method: "GET" })
     const { data: listing, error } = await supabase
       .from("listings")
       .select(
-        "id,owner_id,kind,listing_type,status,title,description,price_cents,price_period,city,state,country,waterway,lat,lng,cover_photo_url,bedrooms,bathrooms,sqft,lot_sqft,dock_length_ft,dock_beam_ft,water_depth_ft,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,power,water_hookup,covered,floating,tidal,liveaboard_allowed,nightly_price_cents,weekly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_guests,advance_notice_hours,featured,created_at,updated_at",
+        "id,owner_id,kind,listing_type,status,title,description,price_cents,price_period,city,state,country,waterway,lat,lng,cover_photo_url,bedrooms,bathrooms,sqft,lot_sqft,dock_length_ft,dock_beam_ft,water_depth_ft,max_boat_length_ft,max_boat_beam_ft,max_boat_draft_ft,power,water_hookup,covered,floating,tidal,liveaboard_allowed,nightly_price_cents,weekly_price_cents,cleaning_fee_cents,min_nights,max_nights,instant_book,max_guests,advance_notice_hours,featured,is_demo,rating_avg,rating_count,house_rules,cancellation_policy,created_at,updated_at",
       )
       .eq("id", data.id)
       .eq("status", "published")
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!listing) return null;
-    const { data: photos } = await supabase
-      .from("listing_photos")
-      .select("id,url,sort_order,is_cover")
-      .eq("listing_id", data.id)
-      .order("sort_order", { ascending: true });
-    return { listing, photos: photos ?? [] };
+    const [{ data: photos }, { data: reviews }] = await Promise.all([
+      supabase
+        .from("listing_photos")
+        .select("id,url,sort_order,is_cover")
+        .eq("listing_id", data.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("reviews")
+        .select("id,rating,body,reviewer_name,created_at")
+        .eq("listing_id", data.id)
+        .order("created_at", { ascending: false })
+        .limit(24),
+    ]);
+    return { listing, photos: photos ?? [], reviews: reviews ?? [] };
   });
 
 const listingInput = z.object({
