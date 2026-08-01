@@ -95,11 +95,13 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
                 {userEmail ? (
                   <>
                     <MenuLink to="/trips" onClick={() => setOpen(false)}>Your trips</MenuLink>
+                    <MenuLink to="/wishlists" onClick={() => setOpen(false)}>Wishlist</MenuLink>
                     <MenuLink to="/bookings" onClick={() => setOpen(false)}>Booking requests</MenuLink>
                     <MenuLink to="/dashboard" onClick={() => setOpen(false)}>Manage docks</MenuLink>
                     <div className="my-2 border-t border-border" />
                     <MenuLink to="/list-your-property" onClick={() => setOpen(false)}>List your dock</MenuLink>
-                    <MenuLink to="/how-it-works" onClick={() => setOpen(false)}>How it works</MenuLink>
+                    <MenuLink to="/pricing" onClick={() => setOpen(false)}>Plans & pricing</MenuLink>
+                    <MenuLink to="/help" onClick={() => setOpen(false)}>Help centre</MenuLink>
                     <button
                       onClick={signOut}
                       className="block w-full px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-muted"
@@ -114,7 +116,8 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
                     <div className="my-2 border-t border-border" />
                     <MenuLink to="/rent" onClick={() => setOpen(false)}>Find a dock</MenuLink>
                     <MenuLink to="/list-your-property" onClick={() => setOpen(false)}>List your dock</MenuLink>
-                    <MenuLink to="/how-it-works" onClick={() => setOpen(false)}>How it works</MenuLink>
+                    <MenuLink to="/pricing" onClick={() => setOpen(false)}>Plans & pricing</MenuLink>
+                    <MenuLink to="/help" onClick={() => setOpen(false)}>Help centre</MenuLink>
                   </>
                 )}
               </div>
