@@ -1,15 +1,20 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useMemo, useState } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { DockCard } from "@/components/dock-card";
+import { PhotoLightbox } from "@/components/photo-lightbox";
+import { AvailabilityCalendar } from "@/components/availability-calendar";
 import { getPublicListing } from "@/lib/listings.functions";
-import { createBookingRequest } from "@/lib/bookings.functions";
+import { createBookingRequest, searchShortTermSlips } from "@/lib/bookings.functions";
 import { formatPrice, locationLine } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
   Anchor,
+  CalendarDays,
+  Grid2x2,
   Heart,
   MapPin,
   Ruler,
@@ -26,13 +31,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+
 const listingQO = (id: string) =>
   queryOptions({
     queryKey: ["listings", "one", id],
     queryFn: () => getPublicListing({ data: { id } }),
   });
 
-export const Route = createFileRoute("/rent/$id")({
+export const Route = createFileRoute("/rent_/$id")({
   loader: async ({ context, params }) => {
     const res = await context.queryClient.ensureQueryData(listingQO(params.id));
     if (!res) throw notFound();
@@ -88,7 +94,11 @@ function Body({ id }: { id: string }) {
   const { data } = useSuspenseQuery(listingQO(id));
   const { isSaved, toggle } = useFavorites();
   const navigate = useNavigate();
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   if (!data) return null;
+
   const l = data.listing;
   const reviews = data.reviews;
   const photos = data.photos.length
@@ -152,22 +162,64 @@ function Body({ id }: { id: string }) {
       </div>
 
       {/* Photo mosaic */}
-      <div className="mt-4 grid gap-2 overflow-hidden rounded-2xl md:grid-cols-4 md:grid-rows-2">
-        <div className="aspect-[4/3] bg-muted md:col-span-2 md:row-span-2 md:aspect-auto">
-          {photos[0] ? (
-            <img src={photos[0].url} alt={l.title} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <Anchor className="h-14 w-14" strokeWidth={1} />
-            </div>
-          )}
+      <div className="relative">
+        <div className="mt-4 grid gap-2 overflow-hidden rounded-2xl md:grid-cols-4 md:grid-rows-2">
+          <button
+            type="button"
+            onClick={() => photos.length && setLightbox(0)}
+            aria-label="View photo 1"
+            className="aspect-[4/3] bg-muted md:col-span-2 md:row-span-2 md:aspect-auto"
+          >
+            {photos[0] ? (
+              <img
+                src={photos[0].url}
+                alt={l.title}
+                className="h-full w-full object-cover transition-opacity hover:opacity-90"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <Anchor className="h-14 w-14" strokeWidth={1} />
+              </div>
+            )}
+          </button>
+          {photos.slice(1, 5).map((p, i) => (
+            <button
+              type="button"
+              key={p.id}
+              onClick={() => setLightbox(i + 1)}
+              aria-label={`View photo ${i + 2}`}
+              className="hidden aspect-[4/3] bg-muted md:block"
+            >
+              <img
+                src={p.url}
+                alt={`${l.title} photo ${i + 2}`}
+                loading="lazy"
+                className="h-full w-full object-cover transition-opacity hover:opacity-90"
+              />
+            </button>
+          ))}
         </div>
-        {photos.slice(1, 5).map((p, i) => (
-          <div key={p.id} className="hidden aspect-[4/3] bg-muted md:block">
-            <img src={p.url} alt={`${l.title} photo ${i + 2}`} loading="lazy" className="h-full w-full object-cover" />
-          </div>
-        ))}
+        {photos.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setLightbox(0)}
+            className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-lg border border-foreground/15 bg-background px-4 py-2 text-sm font-semibold shadow-card transition-transform hover:scale-[1.02]"
+          >
+            <Grid2x2 className="h-4 w-4" /> Show all {photos.length} photos
+          </button>
+        )}
       </div>
+
+      {lightbox !== null && (
+        <PhotoLightbox
+          photos={photos}
+          index={lightbox}
+          title={l.title}
+          onClose={() => setLightbox(null)}
+          onIndexChange={setLightbox}
+        />
+      )}
+
 
       <div className="grid gap-12 pt-8 lg:grid-cols-[1fr_26rem]">
         <div className="min-w-0">
@@ -230,6 +282,51 @@ function Body({ id }: { id: string }) {
           )}
 
           <section className="mt-10 border-t border-border pt-8">
+            <h3 className="text-xl font-bold">Good to know</h3>
+            <div className="mt-4 grid gap-4 text-[15px] sm:grid-cols-2">
+              <Fact label="Minimum stay" value={`${l.min_nights} night${l.min_nights === 1 ? "" : "s"}`} />
+              {l.max_nights ? <Fact label="Maximum stay" value={`${l.max_nights} nights`} /> : null}
+              <Fact
+                label="Advance notice"
+                value={l.advance_notice_hours ? `${l.advance_notice_hours} hours` : "Same-day OK"}
+              />
+              <Fact label="Booking" value={l.instant_book ? "Instant book" : "Host reviews each request"} />
+              <Fact label="Cleaning fee" value={l.cleaning_fee_cents ? formatPrice(l.cleaning_fee_cents) : "None"} />
+              {l.weekly_price_cents ? (
+                <Fact label="Weekly rate" value={`${formatPrice(l.weekly_price_cents)} / week`} />
+              ) : null}
+              <Fact label="Tide" value={l.tidal ? "Tidal berth" : "Non-tidal"} />
+              <Fact label="Max boat draft" value={l.max_boat_draft_ft ? `${l.max_boat_draft_ft}′` : "On request"} />
+            </div>
+          </section>
+
+          {isShortTerm && (
+            <section className="mt-10 border-t border-border pt-8">
+              <h3 className="flex items-center gap-2 text-xl font-bold">
+                <CalendarDays className="h-5 w-5" /> Availability
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {start && end
+                  ? `${new Date(`${start}T00:00:00`).toLocaleDateString()} → ${new Date(`${end}T00:00:00`).toLocaleDateString()}`
+                  : "Pick your arrival and departure to see the total."}
+              </p>
+              <div className="mt-5">
+                <AvailabilityCalendar
+                  listingId={l.id}
+                  start={start}
+                  end={end}
+                  onChange={(s, e) => {
+                    setStart(s);
+                    setEnd(e);
+                  }}
+                />
+              </div>
+            </section>
+          )}
+
+
+
+          <section className="mt-10 border-t border-border pt-8">
             <h3 className="flex items-center gap-2 text-xl font-bold">
               <Star className="h-5 w-5 fill-foreground" />
               {l.rating_count
@@ -280,7 +377,7 @@ function Body({ id }: { id: string }) {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           {isShortTerm ? (
-            <BookingPanel listing={l} />
+            <BookingPanel listing={l} start={start} end={end} onDates={(s, e) => { setStart(s); setEnd(e); }} />
           ) : (
             <div className="rounded-2xl border border-border p-6 shadow-card">
               <p className="text-lg font-bold">This listing isn't available for nightly booking.</p>
@@ -299,11 +396,55 @@ function Body({ id }: { id: string }) {
           </p>
         </aside>
       </div>
+
+      <SimilarDocks listing={l} />
+    </div>
+  );
+}
+
+function SimilarDocks({ listing }: { listing: Listing }) {
+  const city = listing.city ?? undefined;
+  const { data } = useQuery({
+    queryKey: ["similar", listing.id, city ?? listing.country],
+    queryFn: () =>
+      searchShortTermSlips({
+        data: { where: city ?? listing.country ?? undefined, limit: 8 } as never,
+      }),
+    staleTime: 60_000,
+  });
+  const others = (data ?? []).filter((d) => d.id !== listing.id).slice(0, 4);
+  if (!others.length) return null;
+  return (
+    <section className="mt-16 border-t border-border pt-10">
+      <h2 className="text-xl font-bold">More docks near {locationLine(listing) || "here"}</h2>
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {others.map((d) => (
+          <DockCard key={d.id} l={d} compact />
+        ))}
+      </div>
+      <Link
+        to="/rent"
+        search={{ where: city } as never}
+        className="mt-6 inline-block rounded-xl border border-border px-5 py-3 text-sm font-semibold transition-colors hover:bg-muted"
+      >
+        See all docks in {city ?? "this area"}
+      </Link>
+    </section>
+  );
+}
+
+
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right font-semibold">{value}</span>
     </div>
   );
 }
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+
   return (
     <div>
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -316,10 +457,20 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 
 type Listing = NonNullable<Awaited<ReturnType<typeof getPublicListing>>>["listing"];
 
-function BookingPanel({ listing }: { listing: Listing }) {
+function BookingPanel({
+  listing,
+  start,
+  end,
+  onDates,
+}: {
+  listing: Listing;
+  start: string;
+  end: string;
+  onDates: (start: string, end: string) => void;
+}) {
   const navigate = useNavigate();
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const setStart = (v: string) => onDates(v, end && v && end <= v ? "" : end);
+  const setEnd = (v: string) => onDates(start, v);
   const [guests, setGuests] = useState(1);
   const [boatLength, setBoatLength] = useState<string>("");
   const [boatBeam, setBoatBeam] = useState<string>("");
@@ -327,6 +478,7 @@ function BookingPanel({ listing }: { listing: Listing }) {
   const [boatName, setBoatName] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
 
   const nights = useMemo(() => {
     if (!start || !end) return 0;
@@ -469,12 +621,18 @@ function BookingPanel({ listing }: { listing: Listing }) {
       />
 
       <button
-        disabled={busy || !boatOK || nights < 1}
+        disabled={busy || !boatOK || nights < 1 || nights < listing.min_nights}
         className="w-full rounded-xl bg-primary py-3.5 text-[15px] font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
       >
         {busy ? "Sending…" : listing.instant_book ? "Book now" : "Request to book"}
       </button>
+      {nights > 0 && nights < listing.min_nights && (
+        <p className="text-center text-xs text-destructive">
+          This dock has a {listing.min_nights}-night minimum.
+        </p>
+      )}
       <p className="text-center text-xs text-muted-foreground">You won't be charged yet</p>
+
 
       {nights > 0 && (
         <div className="space-y-2 border-t border-border pt-3 text-sm">

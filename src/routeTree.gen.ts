@@ -24,8 +24,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RentIdRouteImport } from './routes/rent.$id'
-import { Route as ListingsIdRouteImport } from './routes/listings.$id'
+import { Route as RentIdRouteImport } from './routes/rent_.$id'
+import { Route as ListingsIdRouteImport } from './routes/listings_.$id'
 import { Route as AuthenticatedWishlistsRouteImport } from './routes/_authenticated/wishlists'
 import { Route as AuthenticatedTripsRouteImport } from './routes/_authenticated/trips'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -108,14 +108,14 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const RentIdRoute = RentIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => RentRoute,
+  id: '/rent_/$id',
+  path: '/rent/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ListingsIdRoute = ListingsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ListingsRoute,
+  id: '/listings_/$id',
+  path: '/listings/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedWishlistsRoute = AuthenticatedWishlistsRouteImport.update({
   id: '/wishlists',
@@ -158,11 +158,11 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/list-your-property': typeof ListYourPropertyRoute
-  '/listings': typeof ListingsRouteWithChildren
+  '/listings': typeof ListingsRoute
   '/map': typeof MapRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/rent': typeof RentRouteWithChildren
+  '/rent': typeof RentRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
@@ -182,11 +182,11 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/list-your-property': typeof ListYourPropertyRoute
-  '/listings': typeof ListingsRouteWithChildren
+  '/listings': typeof ListingsRoute
   '/map': typeof MapRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/rent': typeof RentRouteWithChildren
+  '/rent': typeof RentRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
@@ -208,19 +208,19 @@ export interface FileRoutesById {
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/list-your-property': typeof ListYourPropertyRoute
-  '/listings': typeof ListingsRouteWithChildren
+  '/listings': typeof ListingsRoute
   '/map': typeof MapRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/rent': typeof RentRouteWithChildren
+  '/rent': typeof RentRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/trips': typeof AuthenticatedTripsRoute
   '/_authenticated/wishlists': typeof AuthenticatedWishlistsRoute
-  '/listings/$id': typeof ListingsIdRoute
-  '/rent/$id': typeof RentIdRoute
+  '/listings_/$id': typeof ListingsIdRoute
+  '/rent_/$id': typeof RentIdRoute
   '/_authenticated/listings/new': typeof AuthenticatedListingsNewRoute
   '/_authenticated/listings/$id/edit': typeof AuthenticatedListingsIdEditRoute
 }
@@ -294,8 +294,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/trips'
     | '/_authenticated/wishlists'
-    | '/listings/$id'
-    | '/rent/$id'
+    | '/listings_/$id'
+    | '/rent_/$id'
     | '/_authenticated/listings/new'
     | '/_authenticated/listings/$id/edit'
   fileRoutesById: FileRoutesById
@@ -309,13 +309,15 @@ export interface RootRouteChildren {
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ListYourPropertyRoute: typeof ListYourPropertyRoute
-  ListingsRoute: typeof ListingsRouteWithChildren
+  ListingsRoute: typeof ListingsRoute
   MapRoute: typeof MapRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
-  RentRoute: typeof RentRouteWithChildren
+  RentRoute: typeof RentRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  ListingsIdRoute: typeof ListingsIdRoute
+  RentIdRoute: typeof RentIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -425,19 +427,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rent/$id': {
-      id: '/rent/$id'
-      path: '/$id'
+    '/rent_/$id': {
+      id: '/rent_/$id'
+      path: '/rent/$id'
       fullPath: '/rent/$id'
       preLoaderRoute: typeof RentIdRouteImport
-      parentRoute: typeof RentRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/listings/$id': {
-      id: '/listings/$id'
-      path: '/$id'
+    '/listings_/$id': {
+      id: '/listings_/$id'
+      path: '/listings/$id'
       fullPath: '/listings/$id'
       preLoaderRoute: typeof ListingsIdRouteImport
-      parentRoute: typeof ListingsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/wishlists': {
       id: '/_authenticated/wishlists'
@@ -505,28 +507,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface ListingsRouteChildren {
-  ListingsIdRoute: typeof ListingsIdRoute
-}
-
-const ListingsRouteChildren: ListingsRouteChildren = {
-  ListingsIdRoute: ListingsIdRoute,
-}
-
-const ListingsRouteWithChildren = ListingsRoute._addFileChildren(
-  ListingsRouteChildren,
-)
-
-interface RentRouteChildren {
-  RentIdRoute: typeof RentIdRoute
-}
-
-const RentRouteChildren: RentRouteChildren = {
-  RentIdRoute: RentIdRoute,
-}
-
-const RentRouteWithChildren = RentRoute._addFileChildren(RentRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -536,13 +516,15 @@ const rootRouteChildren: RootRouteChildren = {
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
   ListYourPropertyRoute: ListYourPropertyRoute,
-  ListingsRoute: ListingsRouteWithChildren,
+  ListingsRoute: ListingsRoute,
   MapRoute: MapRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
-  RentRoute: RentRouteWithChildren,
+  RentRoute: RentRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  ListingsIdRoute: ListingsIdRoute,
+  RentIdRoute: RentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
