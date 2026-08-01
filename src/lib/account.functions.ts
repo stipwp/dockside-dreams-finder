@@ -112,3 +112,66 @@ export const listMyFavorites = createServerFn({ method: "GET" })
       .map((r) => r.listings)
       .filter((l): l is NonNullable<typeof l> => !!l && l.status === "published");
   });
+
+// --- Profile ---
+
+export const getMyProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .select("id,full_name,phone,avatar_url,created_at")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { profile: data, email: (context.claims as { email?: string } | null)?.email ?? null };
+  });
+
+export const updateMyProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        full_name: z.string().trim().max(80).optional(),
+        phone: z.string().trim().max(30).optional(),
+        avatar_url: z.string().trim().url().max(500).optional().or(z.literal("")),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({
+        full_name: data.full_name || null,
+        phone: data.phone || null,
+        avatar_url: data.avatar_url || null,
+      })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Counts powering the account dashboard tiles. */
+export const getAccountOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const uid = context.userId;
+    const [trips, hosting, listings, saved, pending] = await Promise.all([
+      context.supabase.from("bookings").select("id", { count: "exact", head: true }).eq("guest_id", uid),
+      context.supabase.from("bookings").select("id", { count: "exact", head: true }).eq("host_id", uid),
+      context.supabase.from("listings").select("id", { count: "exact", head: true }).eq("owner_id", uid),
+      context.supabase.from("favorites").select("listing_id", { count: "exact", head: true }).eq("user_id", uid),
+      context.supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("host_id", uid)
+        .eq("status", "pending"),
+    ]);
+    return {
+      trips: trips.count ?? 0,
+      hosting: hosting.count ?? 0,
+      listings: listings.count ?? 0,
+      saved: saved.count ?? 0,
+      pendingRequests: pending.count ?? 0,
+    };
+  });

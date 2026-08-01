@@ -287,3 +287,30 @@ export const sendInquiry = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Publish / unpublish / mark sold from the host dashboard. */
+export const setListingStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        status: z.enum(["draft", "published", "sold_rented"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: l, error: le } = await context.supabase
+      .from("listings")
+      .select("id,owner_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (le) throw new Error(le.message);
+    if (!l || l.owner_id !== context.userId) throw new Error("Not authorized.");
+    const { error } = await context.supabase
+      .from("listings")
+      .update({ status: data.status })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true, status: data.status };
+  });
