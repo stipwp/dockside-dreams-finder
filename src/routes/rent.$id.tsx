@@ -282,6 +282,51 @@ function Body({ id }: { id: string }) {
           )}
 
           <section className="mt-10 border-t border-border pt-8">
+            <h3 className="text-xl font-bold">Good to know</h3>
+            <div className="mt-4 grid gap-4 text-[15px] sm:grid-cols-2">
+              <Fact label="Minimum stay" value={`${l.min_nights} night${l.min_nights === 1 ? "" : "s"}`} />
+              {l.max_nights ? <Fact label="Maximum stay" value={`${l.max_nights} nights`} /> : null}
+              <Fact
+                label="Advance notice"
+                value={l.advance_notice_hours ? `${l.advance_notice_hours} hours` : "Same-day OK"}
+              />
+              <Fact label="Booking" value={l.instant_book ? "Instant book" : "Host reviews each request"} />
+              <Fact label="Cleaning fee" value={l.cleaning_fee_cents ? formatPrice(l.cleaning_fee_cents) : "None"} />
+              {l.weekly_price_cents ? (
+                <Fact label="Weekly rate" value={`${formatPrice(l.weekly_price_cents)} / week`} />
+              ) : null}
+              <Fact label="Tide" value={l.tidal ? "Tidal berth" : "Non-tidal"} />
+              <Fact label="Max boat draft" value={l.max_boat_draft_ft ? `${l.max_boat_draft_ft}′` : "On request"} />
+            </div>
+          </section>
+
+          {isShortTerm && (
+            <section className="mt-10 border-t border-border pt-8">
+              <h3 className="flex items-center gap-2 text-xl font-bold">
+                <CalendarDays className="h-5 w-5" /> Availability
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {start && end
+                  ? `${new Date(`${start}T00:00:00`).toLocaleDateString()} → ${new Date(`${end}T00:00:00`).toLocaleDateString()}`
+                  : "Pick your arrival and departure to see the total."}
+              </p>
+              <div className="mt-5">
+                <AvailabilityCalendar
+                  listingId={l.id}
+                  start={start}
+                  end={end}
+                  onChange={(s, e) => {
+                    setStart(s);
+                    setEnd(e);
+                  }}
+                />
+              </div>
+            </section>
+          )}
+
+
+
+          <section className="mt-10 border-t border-border pt-8">
             <h3 className="flex items-center gap-2 text-xl font-bold">
               <Star className="h-5 w-5 fill-foreground" />
               {l.rating_count
