@@ -332,7 +332,7 @@ function Body({ id }: { id: string }) {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           {isShortTerm ? (
-            <BookingPanel listing={l} />
+            <BookingPanel listing={l} start={start} end={end} onDates={(s, e) => { setStart(s); setEnd(e); }} />
           ) : (
             <div className="rounded-2xl border border-border p-6 shadow-card">
               <p className="text-lg font-bold">This listing isn't available for nightly booking.</p>
@@ -351,9 +351,43 @@ function Body({ id }: { id: string }) {
           </p>
         </aside>
       </div>
+
+      <SimilarDocks listing={l} />
     </div>
   );
 }
+
+function SimilarDocks({ listing }: { listing: Listing }) {
+  const city = listing.city ?? undefined;
+  const { data } = useQuery({
+    queryKey: ["similar", listing.id, city ?? listing.country],
+    queryFn: () =>
+      searchShortTermSlips({
+        data: { where: city ?? listing.country ?? undefined, limit: 8 } as never,
+      }),
+    staleTime: 60_000,
+  });
+  const others = (data ?? []).filter((d) => d.id !== listing.id).slice(0, 4);
+  if (!others.length) return null;
+  return (
+    <section className="mt-16 border-t border-border pt-10">
+      <h2 className="text-xl font-bold">More docks near {locationLine(listing) || "here"}</h2>
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {others.map((d) => (
+          <DockCard key={d.id} l={d} compact />
+        ))}
+      </div>
+      <Link
+        to="/rent"
+        search={{ where: city } as never}
+        className="mt-6 inline-block rounded-xl border border-border px-5 py-3 text-sm font-semibold transition-colors hover:bg-muted"
+      >
+        See all docks in {city ?? "this area"}
+      </Link>
+    </section>
+  );
+}
+
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
