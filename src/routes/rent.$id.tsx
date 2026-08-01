@@ -94,7 +94,11 @@ function Body({ id }: { id: string }) {
   const { data } = useSuspenseQuery(listingQO(id));
   const { isSaved, toggle } = useFavorites();
   const navigate = useNavigate();
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   if (!data) return null;
+
   const l = data.listing;
   const reviews = data.reviews;
   const photos = data.photos.length
