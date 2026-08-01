@@ -1,97 +1,62 @@
+# DockFront — path to a production-ready, profitable v1
 
-# DockFront → Airbnb + Zillow hybrid
+Goal: an Airbnb-quality dock marketplace that looks alive on day one, converts hosts into paying subscribers, and is safe to put in front of real users. Bookings stay request-to-book (no card payments yet); money comes from host subscriptions and paid featured placement.
 
-Turn the site into a two-mode marketplace:
+## 1. Make it look alive (seed content)
 
-- **Zillow mode** — waterfront homes for sale (FSBO) and long-term dock leases (existing).
-- **Airbnb mode** — short-term nightly/weekly dock rentals with a real availability calendar, date search, booking requests, and host accept/decline.
+- Seed ~18 demo docks across Río Dulce (Guatemala), Nassau, Split, Phuket, Miami, Bocas del Toro, Tortola, Palma — each with photos, nightly price, boat length/beam/draft limits, depth, power, amenities, coordinates, and availability.
+- Every demo listing is flagged as demo so you can delete them all in one click from the dashboard once real hosts arrive.
+- Homepage, search, and map all populate from this data, so no empty states at launch.
 
-Payments stay off for now (contact/booking only). Stripe Connect can be added in a later pass.
+## 2. Airbnb-grade product polish
 
-## 1. Data model additions
+- **Listing detail**: 5-photo mosaic gallery with lightbox, sticky booking card with date picker + boat-fit check + live price breakdown, amenities grid, "what your boat needs" specs, map section, host card, cancellation policy.
+- **Search**: sticky filter bar, working date range + boat dimensions, map/split/grid toggle with hover-linked pins, "search this area", result count, skeleton loaders, shareable URLs.
+- **Saves**: wire the heart to the existing `favorites` table plus a `/wishlists` page (currently the heart is local state only).
+- **Reviews**: guests review after a completed stay; star average shows on cards and detail pages (replaces the placeholder "New" badge).
+- **Messaging**: in-app thread per booking using the existing `booking_messages` table, so hosts and guests never trade emails.
+- **Host onboarding**: multi-step listing wizard (type → location → dock specs → boat limits → photos → pricing → review) instead of one long form.
+- **Trust**: verified-email badge, house rules, cancellation policy per listing, report-listing link.
+- **Mobile**: full pass on nav, filter sheet, booking bar, map.
+- **Empty/loading/error states** everywhere, plus toasts for every action.
 
-New `listing_type` dimension on `listings`:
-- `home_sale` — waterfront home for sale
-- `slip_lease` — long-term dock lease (existing "slip")
-- `slip_short_term` — nightly/weekly dock rental (new)
+## 3. Monetization
 
-Add columns to `listings` for short-term:
-- `nightly_price_cents`, `weekly_price_cents`, `cleaning_fee_cents`
-- `min_nights`, `max_nights`, `advance_notice_hours`, `instant_book` (bool)
-- Boat-fit specs already exist (length, beam, depth, power) — reuse.
+- **Host plans**
+  - Free: 1 active listing, request-to-book only.
+  - Pro (monthly/annual): unlimited listings, instant book, calendar tools, priority support, lower-friction badge.
+- **Featured placement**: paid add-on that pins a listing to the top of matching searches and the homepage rail for a set period, clearly labelled "Featured".
+- **Captain membership (buyer/guest tier)** — proposed inclusions, adjustable:
+  - Early access to newly listed docks before they hit public search.
+  - Saved-search alerts (email when a dock matching your boat + dates appears).
+  - Unlimited wishlists and price-drop alerts.
+  - Priority booking requests (flagged to hosts) and concierge help finding a slip.
+  - Member-only rate hints from participating hosts.
+- Pricing page comparing the three plans, upgrade prompts at natural moments (second listing, featured slot, saved search).
+- Billing itself is a follow-up step: subscriptions need Lovable's built-in payments turned on. I'll build the plan/entitlement model and gating now so switching billing on later is a small change, not a rewrite.
 
-New tables:
-- **`listing_availability`** — per-day blocks/unblocks and price overrides (`listing_id`, `date`, `is_blocked`, `price_cents_override`). Owner-managed.
-- **`bookings`** — guest reservations: `listing_id`, `guest_id`, `start_date`, `end_date`, `guests`, `boat_length_ft`, `boat_beam_ft`, `boat_draft_ft`, `boat_name`, `total_cents`, `status` (`pending` | `accepted` | `declined` | `cancelled` | `expired`), `message`.
-- **`booking_messages`** — thread per booking between guest and host.
+## 4. Production readiness
 
-RLS:
-- `listing_availability`: public SELECT for published listings; owner full write.
-- `bookings`: guest sees own; host sees bookings on own listings; both can update status per role (host accept/decline, guest cancel).
-- `booking_messages`: participants only.
+- Full security scan pass; RLS review on every new table.
+- Transactional email: booking request, host accepted/declined, new message, welcome.
+- SEO: per-route metadata, destination landing pages (Río Dulce, Nassau, Split, Phuket, Miami) for organic traffic, sitemap already dynamic.
+- Analytics events on search, listing view, booking request, signup, upgrade.
+- Legal pages: terms, privacy, host agreement, cancellation policy.
+- Performance: lazy images, map code-split, LCP preload on the hero.
+- Support surface: help center page + contact routing.
 
-All new public tables get GRANTs; owner-write paths use `requireSupabaseAuth`.
+## Technical notes
 
-## 2. Server functions
+- New tables: `reviews`, `saved_searches`, `plans`/`subscriptions` (entitlement fields: plan tier, status, current period end), `featured_placements`, plus an `is_demo` flag on `listings`. Each with GRANTs and RLS scoped to `auth.uid()`.
+- Entitlement checks live in a server function (`getMyEntitlements`) and gate listing count, instant book, and featured purchase — never trusted from the client.
+- Search ranking: featured first, then availability match, then recency.
+- Reviews aggregate via a view or trigger-maintained rating columns on `listings` so cards stay cheap to render.
+- Demo data seeded through a migration with literal INSERTs so it exists on first load.
 
-- `searchShortTermSlips({ where, start, end, boat_length, boat_beam, boat_draft, guests })` — filters by lat/lng bbox + boat-fit + availability (no blocked days, no overlapping accepted bookings in range).
-- `getListingAvailability(listing_id, month)` — calendar data for guest date-picker.
-- `createBookingRequest(...)` — guest submits; server validates dates free, boat fits, price = sum(nightly per day) + cleaning. Auto-accept when `instant_book`.
-- `respondToBooking(booking_id, accept|decline, note)` — host only.
-- `cancelBooking(booking_id)` — guest or host.
-- `listMyBookings()` / `listMyHostBookings()` — dashboards.
-- `setAvailability(listing_id, dates[], is_blocked, price_override?)` — host calendar edits.
-- `sendBookingMessage(booking_id, body)` / `listBookingMessages(booking_id)`.
+## Suggested order
 
-## 3. Routes & UI
-
-**Home page** — split hero into two entry modes (Zillow-style search on left, Airbnb-style on right):
-- "Buy a waterfront home / lease a slip" → `/listings` (existing).
-- "Find a dock for your boat" → `/rent` with where + dates + boat dimensions + guests.
-
-**New public routes**
-- `/rent` — Airbnb-style search: location, check-in/out date range, boat length/beam/draft, guest count. Grid + map results. Uses `searchShortTermSlips`.
-- `/rent/$id` — short-term slip detail: photo gallery, boat-fit specs, availability calendar (react-day-picker), price breakdown, "Request to book" / "Book instantly" panel, host card.
-
-**Existing routes**
-- `/listings` and `/listings/$id` — extended with `listing_type=home_sale|slip_lease` filter and updated card badges. Long-term leases route here.
-
-**Owner (`_authenticated`)**
-- `/dashboard` — tabs: My Listings, My Bookings (as host), My Trips (as guest).
-- `/listings/new` and `/listings/$id/edit` — add "Listing type" picker; when `slip_short_term`, reveal nightly/weekly/cleaning/min-max nights/instant-book fields.
-- `/listings/$id/calendar` — month calendar to block dates and set price overrides.
-- `/bookings/$id` — booking detail + message thread + accept/decline/cancel actions.
-
-## 4. Components
-
-- `RentSearchBar` — where + date range + boat dims + guests, drives `/rent` search params.
-- `AvailabilityCalendar` (guest, read-only + selectable range) and `HostAvailabilityCalendar` (multi-select block/unblock).
-- `BookingRequestPanel` — price breakdown, boat-fit warnings, submit.
-- `BookingCard` + `BookingStatusBadge` — dashboards.
-- `MessageThread` — booking messages.
-- Reuse `ClientMap` for `/rent` results.
-
-## 5. Search params (all URL-driven)
-
-`/rent` schema (via `fallback()` from `@tanstack/zod-adapter`):
-`where`, `start`, `end` (ISO), `boat_length`, `boat_beam`, `boat_draft`, `guests`, `instant`, `view` (grid|map).
-
-## 6. Nav & polish
-
-- SiteNav: add "Rent a dock" and "Buy / Lease" primary links; keep "List your property".
-- List-your-property page updated with three cards: sell home, lease slip long-term, host slip short-term.
-- SEO head() on every new route with unique title/description/OG.
-
-## 7. Out of scope for this pass
-
-Stripe Connect payouts, guest checkout, reviews/ratings, host onboarding KYC. Structure booking table so payments can bolt on later (`status='accepted' → 'paid'` transition + `payment_intent_id` column reserved).
-
-## Technical notes (for the implementer)
-
-- Migrations run in one batch per Lovable Cloud rules (CREATE TABLE → GRANT → ENABLE RLS → CREATE POLICY).
-- Overlap check in `createBookingRequest` uses `tstzrange` overlap against accepted bookings; also block `listing_availability.is_blocked=true` days.
-- `nightly_price_cents` lives on `listings`; per-day overrides live on `listing_availability`. Total = Σ(override ?? nightly) + cleaning_fee.
-- Public `searchShortTermSlips` runs on the server publishable client (anon-safe columns only, no owner contact fields).
-- Bookings + messages fetchers use `requireSupabaseAuth`; called from `_authenticated` loaders or components via `useServerFn`.
-- Availability calendar UI: use existing shadcn `Calendar` (react-day-picker) with `mode="range"` on guest side and `mode="multiple"` on host side; add `pointer-events-auto`.
-- Keep existing PostgREST-injection-safe query sanitizer on any `.or()` search inputs added to `/rent`.
+1. Seed data + listing detail redesign + saves/wishlists
+2. Reviews + messaging + host onboarding wizard
+3. Plans, entitlements, featured placement, pricing page
+4. Emails, legal, SEO landing pages, analytics, security scan
+5. Turn on billing and connect subscriptions
