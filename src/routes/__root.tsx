@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DockFront — Rent a dock anywhere in the world" },
+      { title: "DockFront | Dock Your Boat Anywhere" },
       {
         name: "description",
         content:
@@ -88,8 +88,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "DockFront" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "DockFront — Rent a dock anywhere in the world" },
-      { name: "twitter:title", content: "DockFront — Rent a dock anywhere in the world" },
+      { property: "og:title", content: "DockFront | Dock Your Boat Anywhere" },
+      { name: "twitter:title", content: "DockFront | Dock Your Boat Anywhere" },
       { property: "og:description", content: "Book private docks and slips by the night, worldwide — from Guatemala and the Bahamas to Croatia and Thailand." },
       { name: "twitter:description", content: "Book private docks and slips by the night, worldwide — from Guatemala and the Bahamas to Croatia and Thailand." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a44acd30-15d6-4650-a3a6-89354dc69dc5" },
