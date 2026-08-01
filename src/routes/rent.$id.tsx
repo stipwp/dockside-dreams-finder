@@ -402,10 +402,20 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 
 type Listing = NonNullable<Awaited<ReturnType<typeof getPublicListing>>>["listing"];
 
-function BookingPanel({ listing }: { listing: Listing }) {
+function BookingPanel({
+  listing,
+  start,
+  end,
+  onDates,
+}: {
+  listing: Listing;
+  start: string;
+  end: string;
+  onDates: (start: string, end: string) => void;
+}) {
   const navigate = useNavigate();
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const setStart = (v: string) => onDates(v, end && v && end <= v ? "" : end);
+  const setEnd = (v: string) => onDates(start, v);
   const [guests, setGuests] = useState(1);
   const [boatLength, setBoatLength] = useState<string>("");
   const [boatBeam, setBoatBeam] = useState<string>("");
@@ -413,6 +423,7 @@ function BookingPanel({ listing }: { listing: Listing }) {
   const [boatName, setBoatName] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
 
   const nights = useMemo(() => {
     if (!start || !end) return 0;
