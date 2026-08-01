@@ -621,12 +621,18 @@ function BookingPanel({
       />
 
       <button
-        disabled={busy || !boatOK || nights < 1}
+        disabled={busy || !boatOK || nights < 1 || nights < listing.min_nights}
         className="w-full rounded-xl bg-primary py-3.5 text-[15px] font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
       >
         {busy ? "Sending…" : listing.instant_book ? "Book now" : "Request to book"}
       </button>
+      {nights > 0 && nights < listing.min_nights && (
+        <p className="text-center text-xs text-destructive">
+          This dock has a {listing.min_nights}-night minimum.
+        </p>
+      )}
       <p className="text-center text-xs text-muted-foreground">You won't be charged yet</p>
+
 
       {nights > 0 && (
         <div className="space-y-2 border-t border-border pt-3 text-sm">
