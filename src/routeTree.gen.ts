@@ -28,6 +28,7 @@ import { Route as RentIdRouteImport } from './routes/rent_.$id'
 import { Route as ListingsIdRouteImport } from './routes/listings_.$id'
 import { Route as AuthenticatedWishlistsRouteImport } from './routes/_authenticated/wishlists'
 import { Route as AuthenticatedTripsRouteImport } from './routes/_authenticated/trips'
+import { Route as AuthenticatedReviewsRouteImport } from './routes/_authenticated/reviews'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedListingsNewRouteImport } from './routes/_authenticated/listings.new'
@@ -128,6 +129,11 @@ const AuthenticatedTripsRoute = AuthenticatedTripsRouteImport.update({
   path: '/trips',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReviewsRoute = AuthenticatedReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
   '/trips': typeof AuthenticatedTripsRoute
   '/wishlists': typeof AuthenticatedWishlistsRoute
   '/listings/$id': typeof ListingsIdRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
   '/trips': typeof AuthenticatedTripsRoute
   '/wishlists': typeof AuthenticatedWishlistsRoute
   '/listings/$id': typeof ListingsIdRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/reviews': typeof AuthenticatedReviewsRoute
   '/_authenticated/trips': typeof AuthenticatedTripsRoute
   '/_authenticated/wishlists': typeof AuthenticatedWishlistsRoute
   '/listings_/$id': typeof ListingsIdRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/bookings'
     | '/dashboard'
+    | '/reviews'
     | '/trips'
     | '/wishlists'
     | '/listings/$id'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/bookings'
     | '/dashboard'
+    | '/reviews'
     | '/trips'
     | '/wishlists'
     | '/listings/$id'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/bookings'
     | '/_authenticated/dashboard'
+    | '/_authenticated/reviews'
     | '/_authenticated/trips'
     | '/_authenticated/wishlists'
     | '/listings_/$id'
@@ -467,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTripsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reviews': {
+      id: '/_authenticated/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AuthenticatedReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -508,6 +527,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedReviewsRoute: typeof AuthenticatedReviewsRoute
   AuthenticatedTripsRoute: typeof AuthenticatedTripsRoute
   AuthenticatedWishlistsRoute: typeof AuthenticatedWishlistsRoute
   AuthenticatedBookingsIdRoute: typeof AuthenticatedBookingsIdRoute
@@ -518,6 +538,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedReviewsRoute: AuthenticatedReviewsRoute,
   AuthenticatedTripsRoute: AuthenticatedTripsRoute,
   AuthenticatedWishlistsRoute: AuthenticatedWishlistsRoute,
   AuthenticatedBookingsIdRoute: AuthenticatedBookingsIdRoute,
