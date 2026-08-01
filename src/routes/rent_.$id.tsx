@@ -519,7 +519,7 @@ function BookingPanel({
         },
       });
       toast.success(res.status === "accepted" ? "Booked! Check your trips." : "Request sent to the host.");
-      navigate({ to: "/trips" });
+      navigate({ to: "/bookings/$id", params: { id: res.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Booking failed.");
     } finally {
