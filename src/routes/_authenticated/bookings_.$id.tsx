@@ -117,6 +117,12 @@ function BookingDetail() {
   const isHost = me === booking.host_id;
   const listing = booking.listings;
   const canCancel = booking.status === "pending" || booking.status === "accepted";
+  const { data: refund } = useQuery({
+    queryKey: ["cancellation-quote", id],
+    queryFn: () => previewCancellation({ data: { id } }),
+    enabled: canCancel,
+    retry: false,
+  });
   const stayEnded = booking.end_date <= new Date().toISOString().slice(0, 10);
 
   return (
