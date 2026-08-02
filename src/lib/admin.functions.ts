@@ -3,7 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /** Throws unless the caller holds the admin role. Uses the caller's own client. */
-async function assertAdmin(context: { supabase: typeof import("@/integrations/supabase/client").supabase; userId: string }) {
+type AdminCtx = { supabase: { rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" }) => PromiseLike<{ data: boolean | null; error: { message: string } | null }> }; userId: string };
+async function assertAdmin(context: AdminCtx) {
   const { data, error } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
