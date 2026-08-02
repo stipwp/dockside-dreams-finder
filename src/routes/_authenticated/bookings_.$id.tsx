@@ -287,15 +287,31 @@ function BookingDetail() {
               </>
             )}
             {canCancel && (
-              <button
-                onClick={() => {
-                  if (confirm("Cancel this booking?")) cancel.mutate();
-                }}
-                disabled={cancel.isPending}
-                className="w-full rounded-xl border border-border py-3 text-sm font-bold text-muted-foreground hover:text-destructive disabled:opacity-60"
-              >
-                Cancel booking
-              </button>
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-sm font-bold">Cancellation</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {refund
+                    ? refund.explanation
+                    : "Checking what you'd get back…"}
+                </p>
+                {refund && (
+                  <p className="mt-2 text-sm font-semibold">
+                    Estimated refund: {formatPrice(refund.refundTotalCents)}
+                  </p>
+                )}
+                <button
+                  onClick={() => {
+                    const line = refund
+                      ? `${refund.explanation} Estimated refund ${formatPrice(refund.refundTotalCents)}.`
+                      : "";
+                    if (confirm(`Cancel this booking?\n\n${line}`)) cancel.mutate();
+                  }}
+                  disabled={cancel.isPending}
+                  className="mt-3 w-full rounded-xl border border-border py-3 text-sm font-bold text-muted-foreground hover:text-destructive disabled:opacity-60"
+                >
+                  Cancel booking
+                </button>
+              </div>
             )}
             {!isHost && booking.status === "accepted" && stayEnded && (
               <Link
