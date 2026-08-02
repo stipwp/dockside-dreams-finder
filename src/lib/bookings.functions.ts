@@ -3,6 +3,20 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { quoteRefund } from "@/lib/cancellation";
+import { moderateMessage } from "@/lib/moderation";
+
+/** Writes an in-app notification. Never blocks the caller's action. */
+async function notify(userId: string, kind: string, title: string, body: string | null, link: string) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("notifications").insert({ user_id: userId, kind, title, body, link });
+  } catch (e) {
+    console.error("notify failed", e);
+  }
+}
+
+
 
 function publicClient() {
   const url = process.env.SUPABASE_URL!;
