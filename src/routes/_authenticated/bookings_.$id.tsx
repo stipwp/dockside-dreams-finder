@@ -86,8 +86,11 @@ function BookingDetail() {
 
   const send = useMutation({
     mutationFn: (body: string) => sendBookingMessage({ data: { booking_id: id, body } }),
-    onSuccess: () => {
+    onSuccess: (res) => {
       setDraft("");
+      if (res?.redacted) {
+        toast.warning("Contact details were hidden. Keep payments and messages on DockFront so you stay covered.");
+      }
       qc.invalidateQueries({ queryKey: ["booking-messages", id] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Message failed"),
