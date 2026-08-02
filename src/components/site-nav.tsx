@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Anchor, Menu, Search, Globe, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { NotificationBell } from "@/components/notification-bell";
 
 export function SiteNav({ transparent = false }: { transparent?: boolean }) {
   const [open, setOpen] = useState(false);
