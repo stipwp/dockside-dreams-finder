@@ -425,13 +425,30 @@ export const sendBookingMessage = createServerFn({ method: "POST" })
     body: z.string().trim().min(1).max(2000),
   }).parse(d))
   .handler(async ({ data, context }) => {
+    const { data: booking, error: be } = await context.supabase
+      .from("bookings")
+      .select("guest_id,host_id")
+      .eq("id", data.booking_id)
+      .maybeSingle();
+    if (be) throw new Error(be.message);
+    if (!booking) throw new Error("Conversation not found.");
+    if (booking.guest_id !== context.userId && booking.host_id !== context.userId)
+      throw new Error("Not authorized.");
+
+    const moderated = moderateMessage(data.body);
+    if (!moderated.body) throw new Error("That message can't be sent — keep contact details on DockFront.");
+
     const { error } = await context.supabase.from("booking_messages").insert({
       booking_id: data.booking_id,
       sender_id: context.userId,
-      body: data.body,
+      body: moderated.body,
     });
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    const recipient = booking.guest_id === context.userId ? booking.host_id : booking.guest_id;
+    await notify(recipient, "message", "New message", moderated.body.slice(0, 140), `/bookings/${data.booking_id}`);
+
+    return { ok: true, redacted: moderated.redacted, reasons: moderated.reasons };
   });
 
 // --- Host availability management ---
