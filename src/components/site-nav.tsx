@@ -2,7 +2,10 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Anchor, Menu, Search, Globe, User } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { amIAdmin } from "@/lib/admin.functions";
+import { NotificationBell } from "@/components/notification-bell";
 
 export function SiteNav({ transparent = false }: { transparent?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -10,6 +13,14 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
   const [where, setWhere] = useState("");
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const checkAdmin = useServerFn(amIAdmin);
+  const { data: gate } = useQuery({
+    queryKey: ["am-i-admin"],
+    queryFn: () => checkAdmin(),
+    enabled: !!userEmail,
+    retry: false,
+  });
+  const isAdmin = !!gate?.admin;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
@@ -78,7 +89,9 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
           >
             <Globe className="h-4 w-4" />
           </button>
+          {userEmail && <NotificationBell />}
           <div className="relative">
+
             <button
               onClick={() => setOpen((v) => !v)}
               aria-label="Menu"
@@ -100,6 +113,9 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
                     <MenuLink to="/bookings" onClick={() => setOpen(false)}>Booking requests</MenuLink>
                     <MenuLink to="/dashboard" onClick={() => setOpen(false)}>Manage docks</MenuLink>
                     <MenuLink to="/reviews" onClick={() => setOpen(false)}>Reviews</MenuLink>
+                    {isAdmin && (
+                      <MenuLink to="/admin" onClick={() => setOpen(false)} bold>Admin console</MenuLink>
+                    )}
                     <div className="my-2 border-t border-border" />
                     <MenuLink to="/list-your-property" onClick={() => setOpen(false)}>List your dock</MenuLink>
                     <MenuLink to="/pricing" onClick={() => setOpen(false)}>Plans & pricing</MenuLink>

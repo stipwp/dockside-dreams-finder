@@ -6,6 +6,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import {
   cancelBooking,
+  previewCancellation,
   getMyBooking,
   listBookingMessages,
   respondToBooking,
@@ -85,8 +86,11 @@ function BookingDetail() {
 
   const send = useMutation({
     mutationFn: (body: string) => sendBookingMessage({ data: { booking_id: id, body } }),
-    onSuccess: () => {
+    onSuccess: (res) => {
       setDraft("");
+      if (res?.redacted) {
+        toast.warning("Contact details were hidden. Keep payments and messages on DockFront so you stay covered.");
+      }
       qc.invalidateQueries({ queryKey: ["booking-messages", id] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Message failed"),
@@ -117,6 +121,12 @@ function BookingDetail() {
   const isHost = me === booking.host_id;
   const listing = booking.listings;
   const canCancel = booking.status === "pending" || booking.status === "accepted";
+  const { data: refund } = useQuery({
+    queryKey: ["cancellation-quote", id],
+    queryFn: () => previewCancellation({ data: { id } }),
+    enabled: canCancel,
+    retry: false,
+  });
   const stayEnded = booking.end_date <= new Date().toISOString().slice(0, 10);
 
   return (
@@ -287,15 +297,31 @@ function BookingDetail() {
               </>
             )}
             {canCancel && (
-              <button
-                onClick={() => {
-                  if (confirm("Cancel this booking?")) cancel.mutate();
-                }}
-                disabled={cancel.isPending}
-                className="w-full rounded-xl border border-border py-3 text-sm font-bold text-muted-foreground hover:text-destructive disabled:opacity-60"
-              >
-                Cancel booking
-              </button>
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-sm font-bold">Cancellation</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {refund
+                    ? refund.explanation
+                    : "Checking what you'd get back…"}
+                </p>
+                {refund && (
+                  <p className="mt-2 text-sm font-semibold">
+                    Estimated refund: {formatPrice(refund.refundTotalCents)}
+                  </p>
+                )}
+                <button
+                  onClick={() => {
+                    const line = refund
+                      ? `${refund.explanation} Estimated refund ${formatPrice(refund.refundTotalCents)}.`
+                      : "";
+                    if (confirm(`Cancel this booking?\n\n${line}`)) cancel.mutate();
+                  }}
+                  disabled={cancel.isPending}
+                  className="mt-3 w-full rounded-xl border border-border py-3 text-sm font-bold text-muted-foreground hover:text-destructive disabled:opacity-60"
+                >
+                  Cancel booking
+                </button>
+              </div>
             )}
             {!isHost && booking.status === "accepted" && stayEnded && (
               <Link

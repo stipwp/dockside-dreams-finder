@@ -6,6 +6,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { DockCard } from "@/components/dock-card";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { AvailabilityCalendar } from "@/components/availability-calendar";
+import { ReportButton } from "@/components/report-button";
+import { normalizePolicy } from "@/lib/cancellation";
 import { getPublicListing } from "@/lib/listings.functions";
 import { createBookingRequest, searchShortTermSlips } from "@/lib/bookings.functions";
 import { formatPrice, locationLine } from "@/lib/format";
@@ -275,11 +277,22 @@ function Body({ id }: { id: string }) {
               {l.cancellation_policy && (
                 <div>
                   <h3 className="text-lg font-bold">Cancellation</h3>
-                  <p className="mt-2 text-sm capitalize text-muted-foreground">{l.cancellation_policy}</p>
+                  <p className="mt-2 text-sm font-semibold">
+                    {normalizePolicy(l.cancellation_policy).label}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {normalizePolicy(l.cancellation_policy).summary} Cleaning fees are always returned when a stay is
+                    cancelled.
+                  </p>
                 </div>
               )}
             </section>
           )}
+
+          <div className="mt-8">
+            <ReportButton targetType="listing" targetId={l.id} />
+          </div>
+
 
           <section className="mt-10 border-t border-border pt-8">
             <h3 className="text-xl font-bold">Good to know</h3>

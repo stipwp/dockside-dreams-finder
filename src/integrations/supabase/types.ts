@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          detail: Json
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
+      boat_profiles: {
+        Row: {
+          air_draft_ft: number | null
+          beam_ft: number | null
+          created_at: string
+          draft_ft: number | null
+          id: string
+          is_default: boolean
+          length_ft: number | null
+          name: string
+          power_need: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          air_draft_ft?: number | null
+          beam_ft?: number | null
+          created_at?: string
+          draft_ft?: number | null
+          id?: string
+          is_default?: boolean
+          length_ft?: number | null
+          name: string
+          power_need?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          air_draft_ft?: number | null
+          beam_ft?: number | null
+          created_at?: string
+          draft_ft?: number | null
+          id?: string
+          is_default?: boolean
+          length_ft?: number | null
+          name?: string
+          power_need?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       booking_messages: {
         Row: {
           body: string
@@ -475,6 +547,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -482,6 +587,8 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          suspended_at: string | null
+          suspension_reason: string | null
           updated_at: string
         }
         Insert: {
@@ -490,6 +597,8 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
+          suspended_at?: string | null
+          suspension_reason?: string | null
           updated_at?: string
         }
         Update: {
@@ -498,6 +607,53 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          suspended_at?: string | null
+          suspension_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["report_target"]
           updated_at?: string
         }
         Relationships: []
@@ -649,6 +805,48 @@ export type Database = {
         }
         Relationships: []
       }
+      verifications: {
+        Row: {
+          created_at: string
+          email_verified: boolean
+          id: string
+          identity_status: Database["public"]["Enums"]["verification_status"]
+          phone_verified: boolean
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_verified?: boolean
+          id?: string
+          identity_status?: Database["public"]["Enums"]["verification_status"]
+          phone_verified?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_verified?: boolean
+          id?: string
+          identity_status?: Database["public"]["Enums"]["verification_status"]
+          phone_verified?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -679,7 +877,10 @@ export type Database = {
       listing_type: "home_sale" | "slip_lease" | "slip_short_term"
       plan_tier: "free" | "host_pro" | "captain"
       price_period: "sale" | "month" | "season"
+      report_status: "open" | "reviewing" | "resolved" | "dismissed"
+      report_target: "listing" | "user" | "message" | "booking"
       subscription_status: "active" | "trialing" | "past_due" | "canceled"
+      verification_status: "unverified" | "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -820,7 +1021,10 @@ export const Constants = {
       listing_type: ["home_sale", "slip_lease", "slip_short_term"],
       plan_tier: ["free", "host_pro", "captain"],
       price_period: ["sale", "month", "season"],
+      report_status: ["open", "reviewing", "resolved", "dismissed"],
+      report_target: ["listing", "user", "message", "booking"],
       subscription_status: ["active", "trialing", "past_due", "canceled"],
+      verification_status: ["unverified", "pending", "verified", "rejected"],
     },
   },
 } as const

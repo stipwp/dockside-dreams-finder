@@ -3,6 +3,20 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { quoteRefund } from "@/lib/cancellation";
+import { moderateMessage } from "@/lib/moderation";
+
+/** Writes an in-app notification. Never blocks the caller's action. */
+async function notify(userId: string, kind: string, title: string, body: string | null, link: string) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("notifications").insert({ user_id: userId, kind, title, body, link });
+  } catch (e) {
+    console.error("notify failed", e);
+  }
+}
+
+
 
 function publicClient() {
   const url = process.env.SUPABASE_URL!;
@@ -245,7 +259,19 @@ export const createBookingRequest = createServerFn({ method: "POST" })
       })
       .select("id,status")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (/bookings_no_overlap/.test(error.message))
+        throw new Error("Someone just booked these dates. Pick different nights.");
+      throw new Error(error.message);
+    }
+
+    await notify(
+      listing.owner_id,
+      "booking_request",
+      initialStatus === "accepted" ? "New instant booking" : "New booking request",
+      `${nights} night${nights === 1 ? "" : "s"} · ${data.guests} guest${data.guests === 1 ? "" : "s"}`,
+      `/bookings/${row.id}`,
+    );
     return row;
   });
 
@@ -258,7 +284,7 @@ export const respondToBooking = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: booking, error: be } = await context.supabase
-      .from("bookings").select("id,host_id,status").eq("id", data.id).maybeSingle();
+      .from("bookings").select("id,host_id,guest_id,status").eq("id", data.id).maybeSingle();
     if (be) throw new Error(be.message);
     if (!booking) throw new Error("Booking not found.");
     if (booking.host_id !== context.userId) throw new Error("Only the host can respond.");
@@ -267,8 +293,36 @@ export const respondToBooking = createServerFn({ method: "POST" })
       status: data.action === "accept" ? "accepted" : "declined",
       host_note: data.note ?? null,
     }).eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (/bookings_no_overlap/.test(error.message))
+        throw new Error("Another booking already holds these dates. Decline this one or free the dates first.");
+      throw new Error(error.message);
+    }
+    await notify(
+      booking.guest_id,
+      `booking_${data.action}ed`,
+      data.action === "accept" ? "Your dock is confirmed" : "Booking request declined",
+      data.note || null,
+      `/bookings/${data.id}`,
+    );
     return { ok: true };
+  });
+
+/** Refund preview the guest sees before confirming a cancellation. */
+export const previewCancellation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: booking, error } = await context.supabase
+      .from("bookings")
+      .select("guest_id,host_id,status,start_date,subtotal_cents,cleaning_fee_cents,listings(cancellation_policy)")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!booking) throw new Error("Booking not found.");
+    if (booking.guest_id !== context.userId && booking.host_id !== context.userId)
+      throw new Error("Not authorized.");
+    return quoteRefund(booking, booking.listings?.cancellation_policy, new Date());
   });
 
 export const cancelBooking = createServerFn({ method: "POST" })
@@ -276,14 +330,38 @@ export const cancelBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: booking, error: be } = await context.supabase
-      .from("bookings").select("guest_id,host_id,status").eq("id", data.id).maybeSingle();
+      .from("bookings")
+      .select("guest_id,host_id,status,start_date,subtotal_cents,cleaning_fee_cents,listings(cancellation_policy)")
+      .eq("id", data.id)
+      .maybeSingle();
     if (be) throw new Error(be.message);
     if (!booking) throw new Error("Booking not found.");
     if (booking.guest_id !== context.userId && booking.host_id !== context.userId) throw new Error("Not authorized.");
     if (booking.status === "cancelled" || booking.status === "declined") return { ok: true };
-    const { error } = await context.supabase.from("bookings").update({ status: "cancelled" }).eq("id", data.id);
+
+    // Host-initiated cancellations always refund the guest in full.
+    const cancelledByHost = booking.host_id === context.userId;
+    const quote = cancelledByHost
+      ? quoteRefund(booking, "flexible", new Date(booking.start_date + "T00:00:00Z"))
+      : quoteRefund(booking, booking.listings?.cancellation_policy, new Date());
+
+    const { error } = await context.supabase
+      .from("bookings")
+      .update({
+        status: "cancelled",
+        host_note: `Cancelled by ${cancelledByHost ? "host" : "guest"} · refund ${quote.refundPct}% of nightly total`,
+      })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    await notify(
+      cancelledByHost ? booking.guest_id : booking.host_id,
+      "booking_cancelled",
+      "Booking cancelled",
+      quote.explanation,
+      `/bookings/${data.id}`,
+    );
+    return { ok: true, refund: quote };
   });
 
 export const listMyTrips = createServerFn({ method: "GET" })
@@ -347,13 +425,30 @@ export const sendBookingMessage = createServerFn({ method: "POST" })
     body: z.string().trim().min(1).max(2000),
   }).parse(d))
   .handler(async ({ data, context }) => {
+    const { data: booking, error: be } = await context.supabase
+      .from("bookings")
+      .select("guest_id,host_id")
+      .eq("id", data.booking_id)
+      .maybeSingle();
+    if (be) throw new Error(be.message);
+    if (!booking) throw new Error("Conversation not found.");
+    if (booking.guest_id !== context.userId && booking.host_id !== context.userId)
+      throw new Error("Not authorized.");
+
+    const moderated = moderateMessage(data.body);
+    if (!moderated.body) throw new Error("That message can't be sent — keep contact details on DockFront.");
+
     const { error } = await context.supabase.from("booking_messages").insert({
       booking_id: data.booking_id,
       sender_id: context.userId,
-      body: data.body,
+      body: moderated.body,
     });
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    const recipient = booking.guest_id === context.userId ? booking.host_id : booking.guest_id;
+    await notify(recipient, "message", "New message", moderated.body.slice(0, 140), `/bookings/${data.booking_id}`);
+
+    return { ok: true, redacted: moderated.redacted, reasons: moderated.reasons };
   });
 
 // --- Host availability management ---

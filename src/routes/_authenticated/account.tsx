@@ -11,6 +11,8 @@ import {
   updateMyProfile,
 } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { BoatProfiles } from "@/components/boat-profiles";
+import { VerificationCard } from "@/components/verification-card";
 import { toast } from "sonner";
 import { Anchor, CalendarCheck, Heart, Inbox, Star } from "lucide-react";
 
@@ -166,7 +168,13 @@ function Account() {
             </button>
           </aside>
         </div>
+
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_20rem]">
+          <BoatProfiles />
+          <VerificationCard />
+        </div>
       </main>
+
       <SiteFooter />
     </div>
   );
