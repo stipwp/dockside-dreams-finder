@@ -166,7 +166,13 @@ function Account() {
             </button>
           </aside>
         </div>
+
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_20rem]">
+          <BoatProfiles />
+          <VerificationCard />
+        </div>
       </main>
+
       <SiteFooter />
     </div>
   );
