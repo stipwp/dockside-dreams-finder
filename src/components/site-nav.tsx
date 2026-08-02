@@ -103,6 +103,9 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
                     <MenuLink to="/bookings" onClick={() => setOpen(false)}>Booking requests</MenuLink>
                     <MenuLink to="/dashboard" onClick={() => setOpen(false)}>Manage docks</MenuLink>
                     <MenuLink to="/reviews" onClick={() => setOpen(false)}>Reviews</MenuLink>
+                    {isAdmin && (
+                      <MenuLink to="/admin" onClick={() => setOpen(false)} bold>Admin console</MenuLink>
+                    )}
                     <div className="my-2 border-t border-border" />
                     <MenuLink to="/list-your-property" onClick={() => setOpen(false)}>List your dock</MenuLink>
                     <MenuLink to="/pricing" onClick={() => setOpen(false)}>Plans & pricing</MenuLink>
