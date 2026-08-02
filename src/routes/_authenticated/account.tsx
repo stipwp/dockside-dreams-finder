@@ -11,6 +11,8 @@ import {
   updateMyProfile,
 } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { BoatProfiles } from "@/components/boat-profiles";
+import { VerificationCard } from "@/components/verification-card";
 import { toast } from "sonner";
 import { Anchor, CalendarCheck, Heart, Inbox, Star } from "lucide-react";
 
