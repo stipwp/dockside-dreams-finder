@@ -78,7 +78,9 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
           >
             <Globe className="h-4 w-4" />
           </button>
+          {userEmail && <NotificationBell />}
           <div className="relative">
+
             <button
               onClick={() => setOpen((v) => !v)}
               aria-label="Menu"
