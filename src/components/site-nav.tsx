@@ -11,6 +11,14 @@ export function SiteNav({ transparent = false }: { transparent?: boolean }) {
   const [where, setWhere] = useState("");
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const checkAdmin = useServerFn(amIAdmin);
+  const { data: gate } = useQuery({
+    queryKey: ["am-i-admin"],
+    queryFn: () => checkAdmin(),
+    enabled: !!userEmail,
+    retry: false,
+  });
+  const isAdmin = !!gate?.admin;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
